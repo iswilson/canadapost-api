@@ -1,13 +1,17 @@
 {
-    "name": "thejacer87/canadapost-api",
+    "name": "iswilson/canadapost-api",
     "type": "library",
-    "description": "PHP Canada Post API",
+    "description": "Unofficial PHP library for communicating with Canada Post APIs.",
     "keywords": ["canadapost", "api", "wrapper", "tracking", "shipping", "rate", "rating"],
     "license": "MIT",
     "authors": [
         {
-          "name": "Jace Bennest",
-          "email": "jacebennest87@gmail.com"
+            "name": "Ian Wilson",
+            "role": "Maintainer"
+        },
+        {
+            "name": "Jace Bennest",
+            "role": "Original author"
         }
     ],
     "require": {
@@ -19,6 +23,9 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^4.8 || ^5.0"
+    },
+    "conflict": {
+        "thejacer87/canadapost-api": "*"
     },
     "autoload": {
         "psr-4": {

@@ -1,7 +1,4 @@
-# Library needs a new maintainer
-I no longer plan to support (if I ever did, lol :P) this library. I recommend you fork your own version. 
-
-# ![PHP Canada Post API](https://rawgit.com/thejacer87/php-canadapost-api/develop/php-canadapost-api-logo.svg "PHP Canada Post API") PHP Canada Post API
+# Canada Post API
 
 This library is aimed at wrapping the Canada Post API into a simple to use PHP Library. Currently expected to start with the Rating API and build from there. Feel free to contribute.
 
@@ -25,7 +22,7 @@ It is recommended that you install the PHP Canada Post API library [through comp
 run the Composer command to install the latest stable version of PHP Canada Post API:
 
 ```shell
-composer require thejacer87/canadapost-api
+composer require iswilson/canadapost-api
 ```
 
 <a name="license-section"></a>
