@@ -6,11 +6,16 @@ use CanadaPost\Rating;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Rating Class Tests.
- * @group Rating
  */
+#[CoversClass(Rating::class)]
+#[CoversMethod(Rating::class, 'getRates')]
+#[Group('Rating')]
 class RatingTest extends CanadaPostTestBase
 {
 
@@ -24,7 +29,7 @@ class RatingTest extends CanadaPostTestBase
     /**
      * Build the $ratingService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->ratingService = new Rating($this->config);
@@ -32,10 +37,8 @@ class RatingTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to get rates from Canada Post.
-     * @covers Rating::getRates()
-     * @test
      */
-    public function getRates()
+    public function testGetRates()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/rating-response-success.xml');

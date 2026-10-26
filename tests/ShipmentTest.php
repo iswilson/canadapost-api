@@ -2,16 +2,25 @@
 
 namespace CanadaPost\Tests;
 
+use CanadaPost\ClientBase;
 use CanadaPost\Shipment;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Shipment Class Tests.
- *
- * @group Shipment
  */
+#[CoversClass(Shipment::class)]
+#[CoversMethod(ClientBase::class, 'getArtifact')]
+#[CoversMethod(Shipment::class, 'createShipment')]
+#[CoversMethod(Shipment::class, 'getShipment')]
+#[CoversMethod(Shipment::class, 'getShipments')]
+#[CoversMethod(Shipment::class, 'requestShipmentRefund')]
+#[Group('Shipment')]
 class ShipmentTest extends CanadaPostTestBase
 {
 
@@ -25,7 +34,7 @@ class ShipmentTest extends CanadaPostTestBase
     /**
      * Build the $ratingService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->shipmentService = new Shipment($this->config);
@@ -33,11 +42,8 @@ class ShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to create a non-contract shipment from Canada Post.
-     *
-     * @covers Shipment::createShipment()
-     * @test
      */
-    public function createShipment()
+    public function testCreateShipment()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/shipment-response-success.xml');
@@ -57,11 +63,8 @@ class ShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the GET request to retrieve an artifact from Canada Post.
-     *
-     * @covers Shipment::getShipment()
-     * @test
      */
-    public function getShipment()
+    public function testGetShipment()
     {
         $getShipmentBody = file_get_contents(__DIR__
             . '/Mocks/shipment-response-success.xml');
@@ -86,11 +89,8 @@ class ShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the GET request to retrieve an artifact from Canada Post.
-     *
-     * @covers Shipment::getShipments()
-     * @test
      */
-    public function getShipments()
+    public function testGetShipments()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/ncshipments-response-success.xml');
@@ -123,11 +123,8 @@ class ShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to refund a shipment Canada Post.
-     *
-     * @covers Shipment::requestShipmentRefund()
-     * @test
      */
-    public function requestShipmentRefund()
+    public function testRequestShipmentRefund()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/ncshipment-refund-request-info.xml');
@@ -147,11 +144,8 @@ class ShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the GET request to retrieve an artifact from Canada Post.
-     *
-     * @covers \CanadaPost\ClientBase::getArtifact()
-     * @test
      */
-    public function getArtifact()
+    public function testGetArtifact()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/canadapost.pdf');

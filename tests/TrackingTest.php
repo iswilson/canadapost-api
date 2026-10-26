@@ -6,11 +6,17 @@ use CanadaPost\Tracking;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Tracking Class Tests.
- * @group Tracking
  */
+#[CoversClass(Tracking::class)]
+#[CoversMethod(Tracking::class, 'getSummary')]
+#[CoversMethod(Tracking::class, 'getDetails')]
+#[Group('Tracking')]
 class TrackingTest extends CanadaPostTestBase
 {
 
@@ -24,17 +30,13 @@ class TrackingTest extends CanadaPostTestBase
     /**
      * Build the $trackingService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->trackingService = new Tracking($this->config);
     }
 
-    /**
-     * @covers Tracking::getSummary()
-     * @test
-     */
-    public function getSummary()
+    public function testGetSummary()
     {
         $body = file_get_contents(__DIR__ . '/Mocks/tracking-summary-success.xml');
         $mock = new MockHandler([
@@ -68,11 +70,7 @@ class TrackingTest extends CanadaPostTestBase
 
     }
 
-    /**
-     * @covers Tracking::getDetails()
-     * @test
-     */
-    public function getDetails()
+    public function testGetDetails()
     {
         $body = file_get_contents(__DIR__ . '/Mocks/tracking-details-success.xml');
         $mock = new MockHandler([
@@ -166,12 +164,10 @@ class TrackingTest extends CanadaPostTestBase
 
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Unsupported type: "wrong". Supported types are "pin" and "dnc".
-     */
     public function testGetSummaryInvalidArgument()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported type: "wrong". Supported types are "pin" and "dnc".');
         $mock = new MockHandler([
             new Response(200),
         ]);
@@ -183,12 +179,10 @@ class TrackingTest extends CanadaPostTestBase
         );
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Unsupported type: "wrong". Supported types are "pin" and "dnc".
-     */
     public function testGetDetailsInvalidArgument()
     {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported type: "wrong". Supported types are "pin" and "dnc".');
         $mock = new MockHandler([
             new Response(200),
         ]);

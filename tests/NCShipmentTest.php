@@ -6,12 +6,19 @@ use CanadaPost\NCShipment;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * NCShipment Class Tests.
- *
- * @group NCShipment
  */
+#[CoversClass(NCShipment::class)]
+#[CoversMethod(NCShipment::class, 'createNCShipment')]
+#[CoversMethod(NCShipment::class, 'getNCShipment')]
+#[CoversMethod(NCShipment::class, 'getNCShipments')]
+#[CoversMethod(NCShipment::class, 'requestNCShipmentRefund')]
+#[Group('NCShipment')]
 class NCShipmentTest extends CanadaPostTestBase
 {
 
@@ -25,7 +32,7 @@ class NCShipmentTest extends CanadaPostTestBase
     /**
      * Build the $ratingService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->shipmentService = new NCShipment($this->config);
@@ -33,11 +40,8 @@ class NCShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to create a non-contract shipment from Canada Post.
-     *
-     * @covers NCShipment::createNCShipment()
-     * @test
      */
-    public function createNCShipment()
+    public function testCreateNCShipment()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/ncshipment-response-success.xml');
@@ -56,11 +60,8 @@ class NCShipmentTest extends CanadaPostTestBase
     }
     /**
      * Test the GET request to retrieve an artifact from Canada Post.
-     *
-     * @covers NCShipment::getNCShipment()
-     * @test
      */
-    public function getNCShipment()
+    public function testGetNCShipment()
     {
         $getShipmentBody = file_get_contents(__DIR__
             . '/Mocks/ncshipment-response-success.xml');
@@ -85,11 +86,8 @@ class NCShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the GET request to retrieve an artifact from Canada Post.
-     *
-     * @covers NCShipment::getNCShipments()
-     * @test
      */
-    public function getNCShipments()
+    public function testGetNCShipments()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/ncshipments-response-success.xml');
@@ -122,11 +120,8 @@ class NCShipmentTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to refund a shipment Canada Post.
-     *
-     * @covers NCShipment::requestNCShipmentRefund()
-     * @test
      */
-    public function requestNCShipmentRefund()
+    public function testRequestNCShipmentRefund()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/ncshipment-refund-request-info.xml');

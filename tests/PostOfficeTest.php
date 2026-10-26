@@ -6,12 +6,19 @@ use CanadaPost\PostOffice;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Post Office Class Tests.
- *
- * @group PostOffice
  */
+#[CoversClass(PostOffice::class)]
+#[CoversMethod(PostOffice::class, 'getNearestPostOffice')]
+#[CoversMethod(PostOffice::class, 'getNearestPostOfficeByGeographicalLocation')]
+#[CoversMethod(PostOffice::class, 'getNearestPostOfficeByAddress')]
+#[CoversMethod(PostOffice::class, 'getPostOfficeDetail')]
+#[Group('PostOffice')]
 class PostOfficeTest extends CanadaPostTestBase
 {
 
@@ -25,7 +32,7 @@ class PostOfficeTest extends CanadaPostTestBase
     /**
      * Build the $postOfficeService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->postOfficeService = new PostOffice($this->config);
@@ -33,11 +40,8 @@ class PostOfficeTest extends CanadaPostTestBase
 
     /**
      * Test to get nearest post office from Canada Post.
-     *
-     * @covers PostOffice::getNearestPostOffice()
-     * @test
      */
-    public function getNearestPostOffice()
+    public function testGetNearestPostOffice()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/post-office-nearest-success.xml');
@@ -84,11 +88,8 @@ class PostOfficeTest extends CanadaPostTestBase
 
     /**
      * Test to get nearest post office from Canada Post.
-     *
-     * @covers PostOffice::getNearestPostOfficeByGeographicalLocation()
-     * @test
      */
-    public function getNearestPostOfficeByGeographicalLocation()
+    public function testGetNearestPostOfficeByGeographicalLocation()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/post-office-nearest-success.xml');
@@ -136,11 +137,8 @@ class PostOfficeTest extends CanadaPostTestBase
 
     /**
      * Test to get nearest post office from Canada Post.
-     *
-     * @covers PostOffice::getNearestPostOfficeByAddress()
-     * @test
      */
-    public function getNearestPostOfficeByAddress()
+    public function testGetNearestPostOfficeByAddress()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/post-office-nearest-success.xml');
@@ -189,11 +187,8 @@ class PostOfficeTest extends CanadaPostTestBase
 
     /**
      * Test to get post office detail from Canada Post.
-     *
-     * @covers PostOffice::getPostOfficeDetail()
-     * @test
      */
-    public function getPostOfficeDetail()
+    public function testGetPostOfficeDetail()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/post-office-details-success.xml');

@@ -6,12 +6,16 @@ use CanadaPost\ServiceInfo;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Service Info Class Tests.
- *
- * @group ServiceInfo
  */
+#[CoversClass(ServiceInfo::class)]
+#[CoversMethod(ServiceInfo::class, 'getServiceInfo')]
+#[Group('ServiceInfo')]
 class ServiceInfoTest extends CanadaPostTestBase
 {
 
@@ -25,7 +29,7 @@ class ServiceInfoTest extends CanadaPostTestBase
     /**
      * Build the $serviceInfoService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->serviceInfoService = new ServiceInfo($this->config);
@@ -33,11 +37,8 @@ class ServiceInfoTest extends CanadaPostTestBase
 
     /**
      * Test the request to get service info from Canada Post.
-     *
-     * @covers ServiceInfo::getServiceInfo()
-     * @test
      */
-    public function getServiceInfo()
+    public function testGetServiceInfo()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/service-info-success.xml');

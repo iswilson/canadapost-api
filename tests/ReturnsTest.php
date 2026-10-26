@@ -6,12 +6,20 @@ use CanadaPost\Returns;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Returns Class Tests.
- *
- * @group Returns
  */
+#[CoversClass(Returns::class)]
+#[CoversMethod(Returns::class, 'createAuthorizedReturn')]
+#[CoversMethod(Returns::class, 'createOpenReturn')]
+#[CoversMethod(Returns::class, 'getOpenReturn')]
+#[CoversMethod(Returns::class, 'getOpenReturnDetails')]
+#[CoversMethod(Returns::class, 'getNextOpenReturnArtifact')]
+#[Group('Returns')]
 class ReturnsTest extends CanadaPostTestBase
 {
 
@@ -25,7 +33,7 @@ class ReturnsTest extends CanadaPostTestBase
     /**
      * Build the $returnsService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->returnsService = new Returns($this->config);
@@ -33,11 +41,8 @@ class ReturnsTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to create an authorized return from Canada Post.
-     *
-     * @covers Returns::createAuthorizedReturn()
-     * @test
      */
-    public function createAuthorizedReturn()
+    public function testCreateAuthorizedReturn()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/authreturn-response-success.xml');
@@ -67,11 +72,8 @@ class ReturnsTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to create an open return from Canada Post.
-     *
-     * @covers Returns::createOpenReturn()
-     * @test
      */
-    public function createOpenReturn()
+    public function testCreateOpenReturn()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/openreturn-response-success.xml');
@@ -112,11 +114,8 @@ class ReturnsTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to retrieve an open return from Canada Post.
-     *
-     * @covers Returns::getOpenReturn()
-     * @test
      */
-    public function getOpenReturn()
+    public function testGetOpenReturn()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/openreturn-response-success.xml');
@@ -154,11 +153,8 @@ class ReturnsTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to retrieve an open return from Canada Post.
-     *
-     * @covers Returns::getOpenReturnDetails()
-     * @test
      */
-    public function getOpenReturnDetails()
+    public function testGetOpenReturnDetails()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/openreturn-details-success.xml');
@@ -195,11 +191,8 @@ class ReturnsTest extends CanadaPostTestBase
 
     /**
      * Test the POST request to retrieve the next open return artifact from Canada Post.
-     *
-     * @covers Returns::getNextOpenReturnArtifact()
-     * @test
      */
-    public function getNextOpenReturnArtifact()
+    public function testGetNextOpenReturnArtifact()
     {
         $body = file_get_contents(__DIR__
             . '/Mocks/canadapost.pdf');

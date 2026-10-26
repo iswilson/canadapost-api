@@ -2,12 +2,12 @@
 
 namespace CanadaPost\Tests;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Canada Post API Test Base.
  */
-abstract class CanadaPostTestBase extends PHPUnit_Framework_TestCase
+abstract class CanadaPostTestBase extends TestCase
 {
 
     /**
@@ -20,7 +20,7 @@ abstract class CanadaPostTestBase extends PHPUnit_Framework_TestCase
     /**
      * Build the $ratingService to be tested.
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->config = [
             'username' => 'username',

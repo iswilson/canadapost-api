@@ -1,5 +1,6 @@
-composer.lock
-phpunit.xml
-vendor
-php-canadapost-api.iml
-.idea
+/composer.lock
+
+/vendor/
+
+/phpunit.xml
+/.phpunit.result.cache
