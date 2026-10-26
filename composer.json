@@ -15,8 +15,8 @@
         }
     ],
     "require": {
-        "php": "^5.5.9 || ^5.6 || ^7.0",
-        "guzzlehttp/guzzle": "^6.0",
+        "php": ">=8.3",
+        "guzzlehttp/guzzle": "^7.0",
         "openlss/lib-array2xml": "^0.5.1",
         "psr/log": "^1.0",
         "ext-dom": "*"
@@ -36,7 +36,5 @@
         "psr-4": {
           "CanadaPost\\Tests\\": "tests/"
         }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    }
 }

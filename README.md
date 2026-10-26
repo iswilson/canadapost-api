@@ -11,7 +11,7 @@ This library is aimed at wrapping the Canada Post API into a simple to use PHP L
 <a name="requirements"></a>
 ## Requirements
 
-This library uses PHP 5.5.9+.
+This library requires PHP 8.3+.
 
 To use the Canada Post API, you have to [get your API info from Canada Post](https://www.canadapost.ca/cpotools/apps/drc/home). For every request, you will have to provide the username, password. And some will need your Canada Post business number.
 

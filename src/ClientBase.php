@@ -155,7 +155,7 @@ abstract class ClientBase
      */
     public function post(
         $endpoint,
-        array $headers = [],
+        array $headers,
         $payload,
         array $options = []
     ) {
