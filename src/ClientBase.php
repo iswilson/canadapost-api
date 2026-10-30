@@ -379,10 +379,6 @@ abstract class ClientBase
      */
     protected function buildClient(array &$options)
     {
-        if (!isset($options['debug']) && $this->config['env'] === self::ENV_DEVELOPMENT) {
-            $options['debug'] = true;
-        }
-
         if (!isset($options['handler'])) {
             return new GuzzleClient();
         }
