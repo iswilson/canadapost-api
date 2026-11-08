@@ -1,6 +1,6 @@
 <?php
 
-namespace CanadaPost\Tests;
+namespace iswilson\CanadaPost\Tests;
 
 use PHPUnit\Framework\TestCase;
 

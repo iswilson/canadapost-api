@@ -1,8 +1,8 @@
 <?php
 
-namespace CanadaPost;
+namespace iswilson\CanadaPost;
 
-use CanadaPost\Exception\ClientException;
+use iswilson\CanadaPost\Exception\ClientException;
 use DateTime;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException as GuzzleClientException;

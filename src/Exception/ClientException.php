@@ -1,6 +1,6 @@
 <?php
 
-namespace CanadaPost\Exception;
+namespace iswilson\CanadaPost\Exception;
 
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;

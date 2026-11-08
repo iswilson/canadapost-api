@@ -1,6 +1,6 @@
 <?php
 
-namespace CanadaPost;
+namespace iswilson\CanadaPost;
 
 /**
  * Canada Post API calls to get tracking details.

@@ -1,9 +1,9 @@
 <?php
 
-namespace CanadaPost\Tests;
+namespace iswilson\CanadaPost\Tests;
 
-use CanadaPost\ClientBase;
-use CanadaPost\Shipment;
+use iswilson\CanadaPost\ClientBase;
+use iswilson\CanadaPost\Shipment;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;

@@ -1,8 +1,8 @@
 <?php
 
-namespace CanadaPost\Tests;
+namespace iswilson\CanadaPost\Tests;
 
-use CanadaPost\ServiceInfo;
+use iswilson\CanadaPost\ServiceInfo;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;

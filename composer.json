@@ -27,17 +27,14 @@
         "phpstan/phpstan-strict-rules": "^2.1",
         "phpunit/phpunit": "^12.0"
     },
-    "conflict": {
-        "thejacer87/canadapost-api": "*"
-    },
     "autoload": {
         "psr-4": {
-          "CanadaPost\\": "src"
+          "iswilson\\CanadaPost\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-          "CanadaPost\\Tests\\": "tests/"
+          "iswilson\\CanadaPost\\Tests\\": "tests/"
         }
     },
     "config": {

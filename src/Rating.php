@@ -1,6 +1,6 @@
 <?php
 
-namespace CanadaPost;
+namespace iswilson\CanadaPost;
 
 use LSS\Array2XML;
 

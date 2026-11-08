@@ -1,6 +1,6 @@
 <?php
 
-namespace CanadaPost;
+namespace iswilson\CanadaPost;
 
 /**
  * ServiceInfo contains Canada Post API calls for service information.
