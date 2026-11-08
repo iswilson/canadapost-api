@@ -7,7 +7,6 @@ parameters:
         - tests
     excludePaths:
         analyse:
-            - src/Exception/ClientException.php
             - src/ClientBase.php
             - src/NCShipment.php
             - src/PostOffice.php

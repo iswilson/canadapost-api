@@ -2,6 +2,8 @@
 
 namespace iswilson\CanadaPost;
 
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
+
 /**
  * Canada Post API calls to get tracking details.
  *
@@ -22,8 +24,10 @@ class Tracking extends ClientBase
      *   The options to pass along to the Guzzle Client.
      *
      * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/tracking/trackingsummary.jsf
+     *
      * @return \DOMDocument
-     * @throws \GuzzleHttp\Exception\GuzzleException|\InvalidArgumentException
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException|\iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     public function getSummary($id, $type = 'pin', array $options = [])
     {
@@ -32,7 +36,7 @@ class Tracking extends ClientBase
                 'Unsupported type: "%s". Supported types are "pin" and "dnc".',
                 $type
             );
-            throw new \InvalidArgumentException($message);
+            throw new InvalidArgumentException($message);
         }
         $response = $this->get(
             "vis/track/{$type}/{$id}/summary",
@@ -63,7 +67,7 @@ class Tracking extends ClientBase
                 'Unsupported type: "%s". Supported types are "pin" and "dnc".',
                 $type
             );
-            throw new \InvalidArgumentException($message);
+            throw new InvalidArgumentException($message);
         }
         $response = $this->get(
             "vis/track/{$type}/{$id}/details",

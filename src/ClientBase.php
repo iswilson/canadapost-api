@@ -7,6 +7,7 @@ use DateTime;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException as GuzzleClientException;
 use GuzzleHttp\Psr7\Response;
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use LSS\XML2Array;
 
 /**
@@ -296,12 +297,14 @@ abstract class ClientBase
      *
      * @param array $config
      *   The configuration array.
+     *
+     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     protected function setCredentials(array $config = [])
     {
         if (!isset($config['username']) || !isset($config['password']) || !isset($config['customer_number'])) {
             $message = 'A username, password and customer number are required for authenticated to the Canada Post API.';
-            throw new \InvalidArgumentException($message);
+            throw new InvalidArgumentException($message);
         }
 
         $this->username = $config['username'];
@@ -317,7 +320,8 @@ abstract class ClientBase
      *
      * @return mixed|string
      *   The base url.
-     * @throws \InvalidArgumentException
+     *
+     * @throws iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     protected function baseUrl(array $config = [])
     {
@@ -345,7 +349,7 @@ abstract class ClientBase
                     $config['env'],
                     implode(', ', [self::ENV_DEVELOPMENT, self::ENV_PRODUCTION])
                 );
-                throw new \InvalidArgumentException($message);
+                throw new InvalidArgumentException($message);
         }
 
         return $this->baseUrl;
@@ -357,8 +361,9 @@ abstract class ClientBase
      * @param Response $response
      *   The xml response.
      *
-     * @return \DOMDocument
+     * @return array<string, mixed>
      *   The response array.
+     *
      * @throws \Exception
      */
     protected function parseResponse(Response $response)
@@ -411,21 +416,21 @@ abstract class ClientBase
      * @param string $format
      *   The date format to verify.
      *
-     * @throws \InvalidArgumentException
+     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     protected function verifyDates($from, $to, $format = 'YmdHs')
     {
         if (!DateTime::createFromFormat($format, $from)) {
             $message = 'The $from date is improperly formatted. Please use "YmdHs".';
-            throw new \InvalidArgumentException($message);
+            throw new InvalidArgumentException($message);
         }
         if (!DateTime::createFromFormat($format, $to)) {
             $message = 'The $to date is improperly formatted. Please use "YmdHs".';
-            throw new \InvalidArgumentException($message);
+            throw new InvalidArgumentException($message);
         }
         if (new DateTime($from) > new DateTime($to)) {
             $message = 'The $from date cannot be a later date than the $to date.';
-            throw new \InvalidArgumentException($message);
+            throw new InvalidArgumentException($message);
         }
     }
 
@@ -437,6 +442,8 @@ abstract class ClientBase
      *
      * @return array
      *   The list of options with the option-code.
+     *
+     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     protected function parseOptionCodes(array $options)
     {
@@ -448,7 +455,7 @@ abstract class ClientBase
                     $optionCode,
                     implode(', ', array_keys(self::getOptionCodes()))
                 );
-                throw new \InvalidArgumentException($message);
+                throw new InvalidArgumentException($message);
             }
             // @todo Perhaps we should check for conflicts here, might be overkill.
             // From Canada Post docs:

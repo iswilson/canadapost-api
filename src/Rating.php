@@ -2,6 +2,7 @@
 
 namespace iswilson\CanadaPost;
 
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use LSS\Array2XML;
 
 /**
@@ -151,7 +152,7 @@ class Rating extends ClientBase
                     $serviceCode,
                     implode(', ', array_keys(self::getServiceCodes()))
                 );
-                throw new \InvalidArgumentException($message);
+                throw new InvalidArgumentException($message);
             }
             $services[] = $serviceCode;
         }

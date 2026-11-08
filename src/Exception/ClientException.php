@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace iswilson\CanadaPost\Exception;
 
 use GuzzleHttp\Exception\RequestException;
@@ -12,17 +14,18 @@ use Psr\Http\Message\ResponseInterface;
  * In addition to the request and the response, it makes available the parsed
  * response body.
  */
-class ClientException extends RequestException
+class ClientException extends RequestException implements ExceptionInterface
 {
-    private $responseBody;
+    /** @var array<string, mixed> */
+    private array $responseBody;
 
     public function __construct(
         $message,
         $responseBody,
         RequestInterface $request,
-        ResponseInterface $response = null,
-        \Exception $previous = null,
-        array $handlerContext = []
+        ?ResponseInterface $response = null,
+        ?\Exception $previous = null,
+        array $handlerContext = [],
     ) {
         $this->responseBody = $responseBody;
 
@@ -31,7 +34,7 @@ class ClientException extends RequestException
             $request,
             $response,
             $previous,
-            $handlerContext
+            $handlerContext,
         );
     }
 
