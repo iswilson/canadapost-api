@@ -1,0 +1,27 @@
+includes:
+  - phpstan-baseline.neon
+parameters:
+    level: 0
+    paths:
+        - src
+        - tests
+    excludePaths:
+        analyse:
+            - src/Exception/ClientException.php
+            - src/ClientBase.php
+            - src/NCShipment.php
+            - src/PostOffice.php
+            - src/Rating.php
+            - src/Returns.php
+            - src/ServiceInfo.php
+            - src/Shipment.php
+            - src/Tracking.php
+            - tests/Mocks
+            - tests/CanadaPostTestBase.php
+            - tests/NCShipmentTest.php
+            - tests/PostOfficeTest.php
+            - tests/RatingTest.php
+            - tests/ReturnsTest.php
+            - tests/ServiceInfoTest.php
+            - tests/ShipmentTest.php
+            - tests/TrackingTest.php
