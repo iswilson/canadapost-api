@@ -3,6 +3,7 @@
 namespace iswilson\CanadaPost;
 
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Rating\Destination;
 use LSS\Array2XML;
 
 /**
@@ -13,46 +14,52 @@ use LSS\Array2XML;
  */
 class Rating extends ClientBase
 {
-
     /**
      * Get the shipping rates for the given locations and weight.
      *
      * @param string $originPostalCode
      *   The origin postal code.
-     * @param string $postalCode
+     * @param Destination $destination
      *   The destination postal code.
-     * @param float $weight
+     * @param float|numeric-string $weight
      *   The weight of the package (kg).
      * @param array $options
      *   The array of options. Rating specific options:
      *     - service_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
      *     - options_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
      *
-     * @return \DOMDocument
+     * @return array<string, mixed>
+     *
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getRates(
-        $originPostalCode,
-        $postalCode,
-        $weight,
-        array $options = []
+        string $originPostalCode,
+        Destination $destination,
+        float|string $weight,
+        array $options = [],
     ) {
-        // Canada Post API needs all postal codes to be uppercase and no spaces.
-        $originPostalCode = strtoupper(str_replace(' ', '', $originPostalCode));
-        $postalCode = strtoupper(str_replace(' ', '', $postalCode));
-
         $content = [
             'customer-number' => $this->customerNumber,
             'parcel-characteristics' => [
                 'weight' => $weight,
             ],
-            'origin-postal-code' => $originPostalCode,
-            'destination' => [
-                'domestic' => [
-                    'postal-code' => $postalCode,
-                ],
-            ],
+            'origin-postal-code' => Destination::normalizeCanadianPostalCode($originPostalCode),
         ];
+
+        // Destination.
+        switch ($destination->countryCode) {
+            case 'CA':
+                $content['destination']['domestic']['postal-code'] = $destination->postalCode ?? throw new \LogicException('Missing postal code.');
+                break;
+            case 'US':
+                $content['destination']['united-states']['zip-code'] = $destination->postalCode ?? throw new \LogicException('Missing postal code.');
+                break;
+            default:
+                $content['destination']['international']['country-code'] = $destination->countryCode;
+                if ($destination->postalCode !== null) {
+                    $content['destination']['international']['postal-code'] = $destination->postalCode;
+                }
+        }
 
         // TODO split the options for Canada Post from the options for Guzzle.
         // They can either be separate variables or the Canada Post options can
@@ -73,7 +80,7 @@ class Rating extends ClientBase
         $envelope = $xml->documentElement;
         $envelope->setAttribute(
             'xmlns',
-            'http://www.canadapost.ca/ws/ship/rate-v3'
+            'http://www.canadapost.ca/ws/ship/rate-v3',
         );
         $payload = $xml->saveXML();
 
@@ -84,7 +91,7 @@ class Rating extends ClientBase
                 'Accept' => 'application/vnd.cpc.ship.rate-v3+xml',
             ],
             $payload,
-            $options
+            $options,
         );
 
         $price_quotes = $response['price-quotes']['price-quote'];

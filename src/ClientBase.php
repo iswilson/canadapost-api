@@ -100,7 +100,8 @@ abstract class ClientBase
      *     - handler: Don't use unless you have a valid reason or for unit
      *       testing - http://docs.guzzlephp.org/en/stable/testing.html#mock-handler
      *
-     * @return \DOMDocument|\Psr\Http\Message\StreamInterface
+     * @return array<string, mixed>|\Psr\Http\Message\StreamInterface
+     *
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function get($endpoint, array $headers = [], array $options = [])
@@ -151,7 +152,8 @@ abstract class ClientBase
      *     - handler: Don't use unless you have a valid reason or for unit
      *       testing - http://docs.guzzlephp.org/en/stable/testing.html#mock-handler
      *
-     * @return \DOMDocument
+     * @return array<string, mixed>
+     *
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function post(

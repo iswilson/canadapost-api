@@ -2,12 +2,15 @@
 
 namespace iswilson\CanadaPost\Tests;
 
-use iswilson\CanadaPost\Rating;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use iswilson\CanadaPost\Rating;
+use iswilson\CanadaPost\Rating\Destination;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
@@ -18,7 +21,6 @@ use PHPUnit\Framework\Attributes\Group;
 #[Group('Rating')]
 class RatingTest extends CanadaPostTestBase
 {
-
     /**
      * The Rating service.
      *
@@ -46,7 +48,7 @@ class RatingTest extends CanadaPostTestBase
             new Response(200, [], $body),
         ]);
         $handler = HandlerStack::create($mock);
-        $response = $this->ratingService->getRates('', '', 1, ['handler' => $handler]);
+        $response = $this->ratingService->getRates('K1A0B1', new Destination('CA', 'H0H0H0'), 1, ['handler' => $handler]);
 
         // Check response.
         $this->assertTrue(is_array($response['price-quotes']));
@@ -84,4 +86,63 @@ class RatingTest extends CanadaPostTestBase
         $this->assertEquals('12.26', $rates[3]['price-details']['base']);
     }
 
+    #[DataProvider('getDestinations')]
+    public function testSendsToDestination(Destination $destination, string $expectedXml): void
+    {
+        $request = $this->getSentRequestBody($destination);
+        $sentXml = $request->saveXML($request->getElementsByTagName('destination')->item(0));
+        self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
+    }
+
+    /** @return iterable<string, array{Destination, string}> */
+    public static function getDestinations(): iterable
+    {
+        yield 'Canada' => [
+            new Destination('CA', 'H0H0H0'),
+            '<destination><domestic><postal-code>H0H0H0</postal-code></domestic></destination>',
+        ];
+        yield 'US' => [
+            new Destination('US', '12345'),
+            '<destination><united-states><zip-code>12345</zip-code></united-states></destination>',
+        ];
+        yield 'International with postal code' => [
+            new Destination('AQ', 'A1B2C3D4'),
+            '<destination><international><country-code>AQ</country-code><postal-code>A1B2C3D4</postal-code></international></destination>',
+        ];
+        yield 'International without postal code' => [
+            new Destination('AQ'),
+            '<destination><international><country-code>AQ</country-code></international></destination>',
+        ];
+    }
+
+    public function testOriginPostalCodeIsNormalized(): void
+    {
+        $request = $this->getSentRequestBody(new Destination('CA', 'H0H0H0'), ' h0h-0h0 ');
+        $sentXml = $request->saveXML($request->getElementsByTagName('origin-postal-code')->item(0));
+        self::assertSame('<origin-postal-code>H0H0H0</origin-postal-code>', $sentXml);
+    }
+
+    /**
+     * Get the XML request body from a getRates() call.
+     */
+    private function getSentRequestBody(Destination $destination, string $originPostalCode = 'H0H0H0'): \DOMDocument
+    {
+        $mock = new MockHandler([
+            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+
+        // Add history middleware that will record each request.
+        $historyContainer = [];
+        $history = Middleware::history($historyContainer);
+        $handlerStack->push($history);
+
+        $this->ratingService->getRates($originPostalCode, $destination, 1, ['handler' => $handlerStack]);
+
+        // Get request body from history.
+        $requestBody = new \DOMDocument();
+        $requestBody->loadXML((string) $historyContainer[0]['request']->getBody());
+
+        return $requestBody;
+    }
 }
