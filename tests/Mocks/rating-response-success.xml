@@ -3,7 +3,7 @@
     <price-quote>
         <service-code>DOM.EP</service-code>
         <service-link rel="service" href="https://ct.soa-gw.canadapost.ca/rs/ship/service/DOM.EP?country=CA"
-                      media-type="application/vnd.cpc.ship.rate-v3+xml"></service-link>
+                      media-type="application/vnd.cpc.ship.rate-v4+xml"></service-link>
         <service-name>Expedited Parcel</service-name>
         <price-details>
             <base>9.59</base>
@@ -50,7 +50,7 @@
     <price-quote>
         <service-code>DOM.PC</service-code>
         <service-link rel="service" href="https://ct.soa-gw.canadapost.ca/rs/ship/service/DOM.PC?country=CA"
-                      media-type="application/vnd.cpc.ship.rate-v3+xml"></service-link>
+                      media-type="application/vnd.cpc.ship.rate-v4+xml"></service-link>
         <service-name>Priority Courier</service-name>
         <price-details>
             <base>22.64</base>
@@ -97,7 +97,7 @@
     <price-quote>
         <service-code>DOM.RP</service-code>
         <service-link rel="service" href="https://ct.soa-gw.canadapost.ca/rs/ship/service/DOM.RP?country=CA"
-                      media-type="application/vnd.cpc.ship.rate-v3+xml"></service-link>
+                      media-type="application/vnd.cpc.ship.rate-v4+xml"></service-link>
         <service-name>Regular Parcel</service-name>
         <price-details>
             <base>9.59</base>
@@ -147,7 +147,7 @@
     <price-quote>
         <service-code>DOM.XP</service-code>
         <service-link rel="service" href="https://ct.soa-gw.canadapost.ca/rs/ship/service/DOM.XP?country=CA"
-                      media-type="application/vnd.cpc.ship.rate-v3+xml"></service-link>
+                      media-type="application/vnd.cpc.ship.rate-v4+xml"></service-link>
         <service-name>Xpresspost</service-name>
         <price-details>
             <base>12.26</base>

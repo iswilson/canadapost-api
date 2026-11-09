@@ -6,6 +6,7 @@
 - **BREAKING:** Class namespace has been changed from `CanadaPost\` to `iswilson\CanadaPost\`. Consumers of this library should update their `use` statements. Package no longer conflicts with `thejacer87/canadapost-api`.
 - **BREAKING:** Params for `Rating::getRates()` changed to accept `Rating\Destination` instead of a postal code string.
 - Origin postal codes are validated and normalized before sending the request. An invalid origin postal code throws `Exception\InvalidArgumentException`.
+- Now uses Canada Post `rate-v4` interface (was `rate-v3`), required for international destinations with postal codes.
 
 ### Added
 - New class `Rating\Destination` added to normalize and validate address data (country code, postal/zip code).

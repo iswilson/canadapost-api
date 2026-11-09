@@ -80,15 +80,15 @@ class Rating extends ClientBase
         $envelope = $xml->documentElement;
         $envelope->setAttribute(
             'xmlns',
-            'http://www.canadapost.ca/ws/ship/rate-v3',
+            'http://www.canadapost.ca/ws/ship/rate-v4',
         );
         $payload = $xml->saveXML();
 
         $response = $this->post(
             "rs/ship/price",
             [
-                'Content-Type' => 'application/vnd.cpc.ship.rate-v3+xml',
-                'Accept' => 'application/vnd.cpc.ship.rate-v3+xml',
+                'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
+                'Accept' => 'application/vnd.cpc.ship.rate-v4+xml',
             ],
             $payload,
             $options,
