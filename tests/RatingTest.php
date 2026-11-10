@@ -6,8 +6,10 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating;
 use iswilson\CanadaPost\Rating\Destination;
+use iswilson\CanadaPost\Rating\Parcel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -48,7 +50,12 @@ class RatingTest extends CanadaPostTestBase
             new Response(200, [], $body),
         ]);
         $handler = HandlerStack::create($mock);
-        $response = $this->ratingService->getRates('K1A0B1', new Destination('CA', 'H0H0H0'), 1, ['handler' => $handler]);
+        $response = $this->ratingService->getRates(
+            'K1A0B1',
+            new Destination('CA', 'H0H0H0'),
+            new Parcel(500),
+            ['handler' => $handler],
+        );
 
         // Check response.
         $this->assertTrue(is_array($response['price-quotes']));
@@ -89,7 +96,7 @@ class RatingTest extends CanadaPostTestBase
     #[DataProvider('getDestinations')]
     public function testSendsToDestination(Destination $destination, string $expectedXml): void
     {
-        $request = $this->getSentRequestBody($destination);
+        $request = $this->getSentRequestBody($destination, new Parcel(500));
         $sentXml = $request->saveXML($request->getElementsByTagName('destination')->item(0));
         self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
     }
@@ -117,15 +124,15 @@ class RatingTest extends CanadaPostTestBase
 
     public function testOriginPostalCodeIsNormalized(): void
     {
-        $request = $this->getSentRequestBody(new Destination('CA', 'H0H0H0'), ' h0h-0h0 ');
+        $request = $this->getSentRequestBody(new Destination('CA', 'H0H0H0'), new Parcel(500), ' h0h-0h0 ');
         $sentXml = $request->saveXML($request->getElementsByTagName('origin-postal-code')->item(0));
-        self::assertSame('<origin-postal-code>H0H0H0</origin-postal-code>', $sentXml);
+        self::assertXmlStringEqualsXmlString('<origin-postal-code>H0H0H0</origin-postal-code>', $sentXml);
     }
 
     /**
      * Get the XML request body from a getRates() call.
      */
-    private function getSentRequestBody(Destination $destination, string $originPostalCode = 'H0H0H0'): \DOMDocument
+    private function getSentRequestBody(Destination $destination, Parcel $parcel, string $originPostalCode = 'H0H0H0'): \DOMDocument
     {
         $mock = new MockHandler([
             new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
@@ -137,12 +144,66 @@ class RatingTest extends CanadaPostTestBase
         $history = Middleware::history($historyContainer);
         $handlerStack->push($history);
 
-        $this->ratingService->getRates($originPostalCode, $destination, 1, ['handler' => $handlerStack]);
+        $this->ratingService->getRates($originPostalCode, $destination, $parcel, ['handler' => $handlerStack]);
 
         // Get request body from history.
         $requestBody = new \DOMDocument();
         $requestBody->loadXML((string) $historyContainer[0]['request']->getBody());
 
         return $requestBody;
+    }
+
+    #[DataProvider('getValidFormatDecimalInputs')]
+    public function testFormatDecimal(int $value, int $decimalPlaces, string $expectedValue): void
+    {
+        self::assertSame($expectedValue, Rating::formatDecimal($value, $decimalPlaces));
+    }
+
+    /** @return iterable<string, array{int, int, string}> */
+    public static function getValidFormatDecimalInputs(): iterable
+    {
+        yield 'Zero' => [0, 3, '0.000'];
+        yield 'Needs padding' => [1, 3, '0.001'];
+        yield 'Minimum decimal places' => [123, 1, '12.3'];
+        yield 'Digits equal to decimal places' => [123, 3, '0.123'];
+        yield 'More digits than decimal places' => [1234, 3, '1.234'];
+    }
+
+    #[DataProvider('getInvalidFormatDecimalInputs')]
+    public function testInvalidFormatDecimal(int $value, int $decimalPlaces): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        Rating::formatDecimal($value, $decimalPlaces);
+    }
+
+    /** @return iterable<string, array{int, int}> */
+    public static function getInvalidFormatDecimalInputs(): iterable
+    {
+        yield 'Negative value' => [-1, 3];
+        yield 'Negative decimal places' => [123, -1];
+        yield 'Zero decimal places' => [123, 0];
+    }
+
+    #[DataProvider('getParcelCharacteristics')]
+    public function testSendsParcelCharacteristics(int $weightGrams, ?int $lengthMm, ?int $widthMm, ?int $heightMm, string $expectedXml): void
+    {
+        $request = $this->getSentRequestBody(new Destination('CA', 'H0H0H0'), new Parcel($weightGrams, $lengthMm, $widthMm, $heightMm));
+        $sentXml = $request->saveXML($request->getElementsByTagName('parcel-characteristics')->item(0));
+        self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
+    }
+
+    /** @return iterable<string, array{int, ?int, ?int, ?int, string}> */
+    public static function getParcelCharacteristics(): iterable
+    {
+        yield 'Weight only' => [
+            500,
+            null, null, null,
+            '<parcel-characteristics><weight>0.500</weight></parcel-characteristics>',
+        ];
+        yield 'Include unsorted dimensions' => [
+            500,
+            654, 321, 9999,
+            '<parcel-characteristics><weight>0.500</weight><dimensions><length>999.9</length><width>65.4</width><height>32.1</height></dimensions></parcel-characteristics>',
+        ];
     }
 }

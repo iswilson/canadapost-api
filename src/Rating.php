@@ -4,6 +4,7 @@ namespace iswilson\CanadaPost;
 
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating\Destination;
+use iswilson\CanadaPost\Rating\Parcel;
 use LSS\Array2XML;
 
 /**
@@ -21,8 +22,8 @@ class Rating extends ClientBase
      *   The origin postal code.
      * @param Destination $destination
      *   The destination postal code.
-     * @param float|numeric-string $weight
-     *   The weight of the package (kg).
+     * @param Parcel $parcel
+     *   Parcel characteristics (weight, length, width, height).
      * @param array $options
      *   The array of options. Rating specific options:
      *     - service_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
@@ -35,14 +36,11 @@ class Rating extends ClientBase
     public function getRates(
         string $originPostalCode,
         Destination $destination,
-        float|string $weight,
+        Parcel $parcel,
         array $options = [],
     ) {
         $content = [
             'customer-number' => $this->customerNumber,
-            'parcel-characteristics' => [
-                'weight' => $weight,
-            ],
             'origin-postal-code' => Destination::normalizeCanadianPostalCode($originPostalCode),
         ];
 
@@ -59,6 +57,17 @@ class Rating extends ClientBase
                 if ($destination->postalCode !== null) {
                     $content['destination']['international']['postal-code'] = $destination->postalCode;
                 }
+        }
+
+        // Convert weight to kilograms.
+        $content['parcel-characteristics']['weight'] = self::formatDecimal($parcel->weightGrams, 3);
+        if ($parcel->hasDimensions()) {
+            // Convert dimensions to centimeters.
+            $content['parcel-characteristics']['dimensions'] = [
+                'length' => self::formatDecimal($parcel->lengthMm, 1),
+                'width' => self::formatDecimal($parcel->widthMm, 1),
+                'height' => self::formatDecimal($parcel->heightMm, 1),
+            ];
         }
 
         // TODO split the options for Canada Post from the options for Guzzle.
@@ -165,5 +174,28 @@ class Rating extends ClientBase
         }
 
         return $services;
+    }
+
+    /**
+     * Format number as a decimal string without converting to float.
+     *
+     * @internal
+     *
+     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     */
+    public static function formatDecimal(int $value, int $decimalPlaces): string
+    {
+        if ($value < 0) {
+            throw new InvalidArgumentException(sprintf('Value must not be negative, got: %d.', $value));
+        }
+        if ($decimalPlaces < 1) {
+            throw new InvalidArgumentException(sprintf('Decimal places must be greater than 0, got: %d.', $decimalPlaces));
+        }
+
+        // Pad with zeroes until longer than decimal places.
+        $number = str_pad((string) $value, $decimalPlaces + 1, '0', STR_PAD_LEFT);
+
+        // Insert decimal character.
+        return substr_replace($number, '.', -$decimalPlaces, 0);
     }
 }
