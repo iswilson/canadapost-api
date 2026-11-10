@@ -7,6 +7,8 @@ use LSS\Array2XML;
 /**
  * Returns contains Canada Post API calls for returns.
  *
+ * @deprecated 0.4.0 Unmaintained, no replacement planned. Removed by 1.0.0.
+ *
  * @package CanadaPost
  * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/returns/default.jsf
  */

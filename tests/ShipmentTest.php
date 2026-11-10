@@ -21,6 +21,7 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(Shipment::class, 'getShipments')]
 #[CoversMethod(Shipment::class, 'requestShipmentRefund')]
 #[Group('Shipment')]
+#[Group('deprecated')]
 class ShipmentTest extends CanadaPostTestBase
 {
 

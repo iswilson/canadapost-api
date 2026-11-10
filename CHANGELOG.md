@@ -18,6 +18,9 @@
 ### Fixed
 - US and international price quotes are now supported.
 
+### Deprecated
+- Classes `Shipment`, `NCShipment`, `PostOffice`, `Returns` are unmaintained. No replacement is currently planned. They will be removed before version 1.0.0 is released.
+
 ## [0.3.1] - 2026-10-30
 
 ### Security

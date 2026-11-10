@@ -5,6 +5,8 @@ namespace iswilson\CanadaPost;
 /**
  * Canada Post API calls to get Post Office details.
  *
+ * @deprecated 0.4.0 Unmaintained, no replacement planned. Removed by 1.0.0.
+ *
  * @package CanadaPost
  * @see     https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/findpostoffice/default.jsf
  */

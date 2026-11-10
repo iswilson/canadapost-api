@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(PostOffice::class, 'getNearestPostOfficeByAddress')]
 #[CoversMethod(PostOffice::class, 'getPostOfficeDetail')]
 #[Group('PostOffice')]
+#[Group('deprecated')]
 class PostOfficeTest extends CanadaPostTestBase
 {
 

@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(NCShipment::class, 'getNCShipments')]
 #[CoversMethod(NCShipment::class, 'requestNCShipmentRefund')]
 #[Group('NCShipment')]
+#[Group('deprecated')]
 class NCShipmentTest extends CanadaPostTestBase
 {
 

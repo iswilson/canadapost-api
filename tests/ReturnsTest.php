@@ -20,6 +20,7 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(Returns::class, 'getOpenReturnDetails')]
 #[CoversMethod(Returns::class, 'getNextOpenReturnArtifact')]
 #[Group('Returns')]
+#[Group('deprecated')]
 class ReturnsTest extends CanadaPostTestBase
 {
 
