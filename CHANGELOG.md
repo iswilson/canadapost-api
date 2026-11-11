@@ -14,6 +14,7 @@
 - Optional parcel dimensions are now included in rate requests.
 - Exceptions thrown by the library implement `Exception\ExceptionInterface`.
 - Invalid input (before the API request is sent) throws `Exception\InvalidArgumentException`.
+- Rating and tracking requests should go through the new class and method `CanadaPost::devProgram()`, which creates a client for the Canada Post Developer Program (XML). This defaults to the Canada Post development/sandbox environment.
 
 ### Fixed
 - US and international price quotes are now supported.
