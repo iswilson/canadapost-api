@@ -2,9 +2,11 @@
 
 namespace iswilson\CanadaPost;
 
+use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
+use iswilson\CanadaPost\Rating\PriceQuote;
 use LSS\Array2XML;
 
 /**
@@ -29,16 +31,17 @@ class Rating extends ClientBase
      *     - service_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
      *     - options_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
      *
-     * @return array<string, mixed>
+     * @return list<PriceQuote>
      *
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
      */
     public function getRates(
         string $originPostalCode,
         Destination $destination,
         Parcel $parcel,
         array $options = [],
-    ) {
+    ): array {
         $content = [
             'customer-number' => $this->customerNumber,
             'origin-postal-code' => Destination::normalizeCanadianPostalCode($originPostalCode),
@@ -73,15 +76,16 @@ class Rating extends ClientBase
         // TODO split the options for Canada Post from the options for Guzzle.
         // They can either be separate variables or the Canada Post options can
         // be within a sub-array keyed by canada_post (or the other way around).
-        if (!empty($options['service_codes'])) {
+        $serviceCodes = $options['service_codes'] ?? [];
+        if ($serviceCodes !== []) {
             $content['services']['service-code'] = $this->parseServiceCodes($options);
         }
-
-        if (!empty($options['option_codes'])) {
+        $optionCodes = $options['option_codes'] ?? [];
+        if ($optionCodes !== []) {
             $content['options']['option'] = $this->parseOptionCodes($options);
         }
 
-        if (!empty($this->config['contract_id'])) {
+        if (isset($this->config['contract_id'])) {
             $content['contract-id'] = $this->config['contract_id'];
         }
 
@@ -93,7 +97,8 @@ class Rating extends ClientBase
         );
         $payload = $xml->saveXML();
 
-        $response = $this->post(
+        $options['raw_response'] = true;
+        $response = (string) $this->post(
             "rs/ship/price",
             [
                 'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
@@ -103,13 +108,75 @@ class Rating extends ClientBase
             $options,
         );
 
-        $price_quotes = $response['price-quotes']['price-quote'];
-        // If only one service comes back, it does NOT return an array of quotes
-        // unlike when multiple services are requested.
-        if (array_key_exists('service-code', $price_quotes)) {
-            $response['price-quotes']['price-quote'] = [$price_quotes];
+        return self::parsePriceQuotes($response);
+    }
+
+    /**
+     * Parse an XML response string into an array of PriceQuote.
+     *
+     * @internal
+     *
+     * @return list<PriceQuote>
+     *
+     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     */
+    public static function parsePriceQuotes(string $response): array
+    {
+        // Response is empty.
+        if ($response === '') {
+            throw new CanadaPostException('Canada Post API returned an empty response.');
         }
-        return $response;
+
+        $doc = new \DOMDocument();
+
+        // Suppress libxml errors while reading response data.
+        $previousSetting = libxml_use_internal_errors(true);
+        $responseLoaded = $doc->loadXML($response);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousSetting);
+
+        // Response is not valid XML.
+        if (!$responseLoaded) {
+            throw new CanadaPostException('Canada Post API returned invalid XML.');
+        }
+
+        // Response is valid XML but doesn't contain price-quotes element.
+        if ($doc->documentElement?->localName !== 'price-quotes') {
+            throw new CanadaPostException('Canada Post API returned valid XML but <price-quotes> element is missing.');
+        }
+
+        $priceQuotes = [];
+        // Extract price quote data.
+        $nodes = $doc->getElementsByTagName('price-quote');
+        foreach ($nodes as $node) {
+            $serviceCode = $node->getElementsByTagName('service-code')->item(0)?->textContent ?? '';
+            if ($serviceCode === '') {
+                throw new CanadaPostException('Canada Post API returned an empty service code.');
+            }
+
+            $serviceName = $node->getElementsByTagName('service-name')->item(0)?->textContent ?? '';
+            if ($serviceName === '') {
+                throw new CanadaPostException('Canada Post API returned an empty service name.');
+            }
+
+            $totalDue = $node->getElementsByTagName('due')->item(0)?->textContent ?? '';
+
+            // Missing (not empty) tax elements should have a default of zero.
+            $gst = $node->getElementsByTagName('gst')->item(0)?->textContent ?? '0';
+            $pst = $node->getElementsByTagName('pst')->item(0)?->textContent ?? '0';
+            $hst = $node->getElementsByTagName('hst')->item(0)?->textContent ?? '0';
+
+            $priceQuotes[] = new PriceQuote(
+                $serviceCode,
+                $serviceName,
+                self::convertDollarsToCents($totalDue),
+                self::convertDollarsToCents($gst),
+                self::convertDollarsToCents($pst),
+                self::convertDollarsToCents($hst),
+            );
+        }
+
+        return $priceQuotes;
     }
 
     /**
@@ -166,7 +233,7 @@ class Rating extends ClientBase
                 $message = sprintf(
                     'Unsupported service code: "%s". Supported services are %s',
                     $serviceCode,
-                    implode(', ', array_keys(self::getServiceCodes()))
+                    implode(', ', array_keys(self::getServiceCodes())),
                 );
                 throw new InvalidArgumentException($message);
             }
@@ -197,5 +264,28 @@ class Rating extends ClientBase
 
         // Insert decimal character.
         return substr_replace($number, '.', -$decimalPlaces, 0);
+    }
+
+    /**
+     * Convert dollar amount to cents, without floats.
+     *
+     * @internal
+     *
+     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     */
+    public static function convertDollarsToCents(string $value): int
+    {
+        // Value must be a dollar amount (with or without a decimal).
+        $value = trim($value);
+        if (preg_match('/^[0-9]+(\.[0-9]{1,2})?$/', $value) !== 1) {
+            throw new CanadaPostException(sprintf('Canada Post API returned an invalid dollar amount, got: %s.', $value));
+        }
+
+        // Split into dollars and cents.
+        [$dollars, $cents] = array_pad(explode('.', $value), 2, null);
+
+        // Ensure cents are 2 digits long and stitch back together.
+        $cents = str_pad((string) $cents, 2, '0');
+        return (int) ($dollars . $cents);
     }
 }

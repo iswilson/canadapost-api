@@ -18,7 +18,8 @@
         "php": ">=8.3",
         "guzzlehttp/guzzle": "^7.0",
         "openlss/lib-array2xml": "^0.5.1",
-        "ext-dom": "*"
+        "ext-dom": "*",
+        "ext-libxml": "*"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95",

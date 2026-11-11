@@ -6,10 +6,12 @@ use GuzzleHttp\Middleware;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
+use iswilson\CanadaPost\Rating\PriceQuote;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -25,10 +27,8 @@ class RatingTest extends CanadaPostTestBase
 {
     /**
      * The Rating service.
-     *
-     * @var Rating
      */
-    protected $ratingService;
+    protected Rating $ratingService;
 
     /**
      * Build the $ratingService to be tested.
@@ -40,57 +40,246 @@ class RatingTest extends CanadaPostTestBase
     }
 
     /**
-     * Test the POST request to get rates from Canada Post.
+     * Test successful rating response.
      */
-    public function testGetRates()
+    public function testValidRatingResponse(): void
     {
-        $body = file_get_contents(__DIR__
-            . '/Mocks/rating-response-success.xml');
+        $response = $this->getRatingResponse(file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml'));
+        self::assertEquals([
+            new PriceQuote('DOM.EP', 'Expedited Parcel', 1021),
+            new PriceQuote('DOM.PC', 'Priority Courier', 2520),
+            new PriceQuote('DOM.RP', 'Regular Parcel', 1021),
+            new PriceQuote('DOM.XP', 'Xpresspost', 1364),
+        ], $response);
+    }
+
+    public function testEmptyRatingResponse(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('empty response');
+        $this->getRatingResponse('');
+    }
+
+    public function testInvalidRatingResponse(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('invalid XML');
+        $this->getRatingResponse('this is not an XML string');
+    }
+
+    public function testValidResponseWithMissingPriceQuotes(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('element is missing');
+        $this->getRatingResponse(<<<'EOF'
+            <messages>
+                <message>
+                    <code>7007</code>
+                    <description>The weight value is invalid. The weight of each piece must be less than or equal to 30 kg.</description>
+                </message>
+                <message>
+                    <code>1722</code>
+                    <description>The options are invalid for the selected Service. Please change the options or select another service.</description>
+                </message>
+            </messages>
+        EOF);
+    }
+
+    /**
+     * Get rating response from provided XML.
+     *
+     * @return list<PriceQuote>
+     */
+    private function getRatingResponse(string $xml): array
+    {
         $mock = new MockHandler([
-            new Response(200, [], $body),
+            new Response(200, [], $xml),
         ]);
-        $handler = HandlerStack::create($mock);
-        $response = $this->ratingService->getRates(
-            'K1A0B1',
+        $handlerStack = HandlerStack::create($mock);
+
+        return $this->ratingService->getRates(
+            'H0H0H0',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            ['handler' => $handler],
+            ['handler' => $handlerStack],
         );
+    }
 
-        // Check response.
-        $this->assertTrue(is_array($response['price-quotes']));
+    public function testEmptyPriceQuotes(): void
+    {
+        $response = $this->getRatingResponse('<?xml version="1.0" encoding="UTF-8"?><price-quotes></price-quotes>');
+        self::assertEquals([], $response);
+    }
 
-        // Test the rates.
-        $rates = $response['price-quotes']['price-quote'];
-        $this->assertTrue(is_array($rates));
+    public function testResponseMissingServiceCode(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('service code');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-name>Expedited Parcel</service-name>
+                    <price-details>
+                        <due>10.00</due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst>0.00</pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+    }
 
-        // Expedited Parcel.
-        $this->assertTrue(is_array($rates[0]));
-        $this->assertEquals('DOM.EP', $rates[0]['service-code']);
-        $this->assertEquals('Expedited Parcel', $rates[0]['service-name']);
-        $this->assertTrue(is_array($rates[0]['price-details']));
-        $this->assertEquals('9.59', $rates[0]['price-details']['base']);
+    public function testResponseEmptyServiceCode(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('service code');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code></service-code>
+                    <service-name>Expedited Parcel</service-name>
+                    <price-details>
+                        <due>10.00</due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst>0.00</pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+    }
 
-        // Priority Courier.
-        $this->assertTrue(is_array($rates[1]));
-        $this->assertEquals('DOM.PC', $rates[1]['service-code']);
-        $this->assertEquals('Priority Courier', $rates[1]['service-name']);
-        $this->assertTrue(is_array($rates[1]['price-details']));
-        $this->assertEquals('22.64', $rates[1]['price-details']['base']);
+    public function testResponseMissingServiceName(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('service name');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code>DOM.EP</service-code>
+                    <price-details>
+                        <due>10.00</due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst>0.00</pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+    }
 
-        // Priority Courier.
-        $this->assertTrue(is_array($rates[2]));
-        $this->assertEquals('DOM.RP', $rates[2]['service-code']);
-        $this->assertEquals('Regular Parcel', $rates[2]['service-name']);
-        $this->assertTrue(is_array($rates[2]['price-details']));
-        $this->assertEquals('9.59', $rates[2]['price-details']['base']);
+    public function testResponseEmptyServiceName(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('service name');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code>DOM.EP</service-code>
+                    <service-name></service-name>
+                    <price-details>
+                        <due>10.00</due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst>0.00</pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+    }
 
-        // Priority Courier.
-        $this->assertTrue(is_array($rates[3]));
-        $this->assertEquals('DOM.XP', $rates[3]['service-code']);
-        $this->assertEquals('Xpresspost', $rates[3]['service-name']);
-        $this->assertTrue(is_array($rates[3]['price-details']));
-        $this->assertEquals('12.26', $rates[3]['price-details']['base']);
+    public function testResponseMissingTotalDue(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('dollar amount');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code>DOM.EP</service-code>
+                    <service-name>Expedited Parcel</service-name>
+                    <price-details>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst>0.00</pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+    }
+
+    public function testResponseEmptyTotalDue(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('dollar amount');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code>DOM.EP</service-code>
+                    <service-name>Expedited Parcel</service-name>
+                    <price-details>
+                        <due></due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst>0.00</pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+    }
+
+    public function testResponseMissingTax(): void
+    {
+        $response = $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code>DOM.EP</service-code>
+                    <service-name>Expedited Parcel</service-name>
+                    <price-details>
+                        <due>10.00</due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
+        self::assertSame(0, $response[0]->pstCents);
+    }
+
+    public function testResponseEmptyTax(): void
+    {
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('dollar amount');
+        $this->getRatingResponse(<<<'EOF'
+            <price-quotes>
+                <price-quote>
+                    <service-code>DOM.EP</service-code>
+                    <service-name>Expedited Parcel</service-name>
+                    <price-details>
+                        <due>10.00</due>
+                        <taxes>
+                            <gst>0.00</gst>
+                            <pst></pst>
+                            <hst>0.00</hst>
+                        </taxes>
+                    </price-details>
+                </price-quote>
+            </price-quotes>
+        EOF);
     }
 
     #[DataProvider('getDestinations')]
@@ -205,5 +394,40 @@ class RatingTest extends CanadaPostTestBase
             654, 321, 9999,
             '<parcel-characteristics><weight>0.500</weight><dimensions><length>999.9</length><width>65.4</width><height>32.1</height></dimensions></parcel-characteristics>',
         ];
+    }
+
+    #[DataProvider('getValidFormatDollarToCentsAmounts')]
+    public function testValidFormatDollarToCentsAmounts(string $value, int $expectedValue): void
+    {
+        self::assertSame($expectedValue, Rating::convertDollarsToCents($value));
+    }
+
+    /** @return iterable<string, array{string, int}> */
+    public static function getValidFormatDollarToCentsAmounts(): iterable
+    {
+        yield 'Two decimals' => ['12.34', 1234];
+        yield 'One decimal' => ['12.3', 1230];
+        yield 'No decimals' => ['12', 1200];
+        yield 'Zero with two decimals' => ['0.00', 0];
+        yield 'Zero with one decimal' => ['0.0', 0];
+        yield 'Zero with no decimals' => ['0', 0];
+        yield 'Has padding' => [' 12.34 ', 1234];
+    }
+
+    #[DataProvider('getInvalidFormatDollarToCentsAmounts')]
+    public function testInvalidFormatDollarToCentsAmounts(string $value): void
+    {
+        $this->expectException(CanadaPostException::class);
+        Rating::convertDollarsToCents($value);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function getInvalidFormatDollarToCentsAmounts(): iterable
+    {
+        yield 'Empty' => [''];
+        yield 'Too many dots' => ['1.2.3'];
+        yield 'Too many decimals' => ['1.234'];
+        yield 'Negative' => ['-12.34'];
+        yield 'Letters' => ['A1.23'];
     }
 }

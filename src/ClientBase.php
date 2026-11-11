@@ -9,6 +9,7 @@ use GuzzleHttp\Exception\ClientException as GuzzleClientException;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use LSS\XML2Array;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Provides a base class for Canada Post API clients.
@@ -152,7 +153,7 @@ abstract class ClientBase
      *     - handler: Don't use unless you have a valid reason or for unit
      *       testing - http://docs.guzzlephp.org/en/stable/testing.html#mock-handler
      *
-     * @return array<string, mixed>
+     * @return array<string, mixed>|StreamInterface
      *
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
@@ -184,6 +185,11 @@ abstract class ClientBase
                 $exception->getPrevious(),
                 $exception->getHandlerContext()
             );
+        }
+
+        // Skip parsing if specified.
+        if (!empty($options['raw_response'])) {
+            return $response->getBody();
         }
 
         return $this->parseResponse($response);
