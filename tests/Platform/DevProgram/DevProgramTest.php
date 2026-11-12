@@ -79,7 +79,7 @@ final class DevProgramTest extends TestCase
     {
         $request = $this->getSentRequest(new DevProgram('username', 'password', ' 123456789 ', ' 987654321 ', true));
         $body = new \DOMDocument();
-        $body->loadXml((string) $request->getBody());
+        $body->loadXML((string) $request->getBody());
         self::assertSame('123456789', $body->getElementsByTagName('customer-number')->item(0)?->textContent);
         self::assertSame('987654321', $body->getElementsByTagName('contract-id')->item(0)?->textContent);
     }
@@ -89,7 +89,7 @@ final class DevProgramTest extends TestCase
     {
         $request = $this->getSentRequest(new DevProgram('username', 'password', '123456789', $contractId, true));
         $body = new \DOMDocument();
-        $body->loadXml((string) $request->getBody());
+        $body->loadXML((string) $request->getBody());
         self::assertSame(0, $body->getElementsByTagName('contract-id')->length);
     }
 

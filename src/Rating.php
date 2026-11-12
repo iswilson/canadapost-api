@@ -31,7 +31,7 @@ class Rating extends ClientBase
      *   The destination postal code.
      * @param Parcel $parcel
      *   Parcel characteristics (weight, length, width, height).
-     * @param array $options
+     * @param array<string, mixed> $options
      *   The array of options. Rating specific options:
      *     - service_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
      *     - options_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
@@ -162,22 +162,22 @@ class Rating extends ClientBase
         // Extract price quote data.
         $nodes = $doc->getElementsByTagName('price-quote');
         foreach ($nodes as $node) {
-            $serviceCode = $node->getElementsByTagName('service-code')->item(0)?->textContent ?? '';
+            $serviceCode = $node->getElementsByTagName('service-code')->item(0)->textContent ?? '';
             if ($serviceCode === '') {
                 throw new CanadaPostException('Canada Post API returned an empty service code.');
             }
 
-            $serviceName = $node->getElementsByTagName('service-name')->item(0)?->textContent ?? '';
+            $serviceName = $node->getElementsByTagName('service-name')->item(0)->textContent ?? '';
             if ($serviceName === '') {
                 throw new CanadaPostException('Canada Post API returned an empty service name.');
             }
 
-            $totalDue = $node->getElementsByTagName('due')->item(0)?->textContent ?? '';
+            $totalDue = $node->getElementsByTagName('due')->item(0)->textContent ?? '';
 
             // Missing (not empty) tax elements should have a default of zero.
-            $gst = $node->getElementsByTagName('gst')->item(0)?->textContent ?? '0';
-            $pst = $node->getElementsByTagName('pst')->item(0)?->textContent ?? '0';
-            $hst = $node->getElementsByTagName('hst')->item(0)?->textContent ?? '0';
+            $gst = $node->getElementsByTagName('gst')->item(0)->textContent ?? '0';
+            $pst = $node->getElementsByTagName('pst')->item(0)->textContent ?? '0';
+            $hst = $node->getElementsByTagName('hst')->item(0)->textContent ?? '0';
 
             $priceQuotes[] = new PriceQuote(
                 $serviceCode,
@@ -195,7 +195,7 @@ class Rating extends ClientBase
     /**
      * Get the Canada Post specific service codes,
      *
-     * @return array
+     * @return array<string, string>
      *   The array of service codes.
      *
      * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
@@ -232,13 +232,13 @@ class Rating extends ClientBase
     /**
      * Helper function to extract the service codes.
      *
-     * @param array $options
+     * @param array<string, mixed> $options
      *   The options array.
      *
-     * @return array
+     * @return list<string>
      *   The list of services to look up.
      */
-    protected function parseServiceCodes(array $options)
+    protected function parseServiceCodes(array $options): array
     {
         $services = [];
         foreach ($options['service_codes'] as $serviceCode) {

@@ -19,12 +19,16 @@ class ClientException extends RequestException implements ExceptionInterface
     /** @var array<string, mixed> */
     private array $responseBody;
 
+    /**
+     * @param array<string, mixed> $responseBody
+     * @param array<string, mixed> $handlerContext
+     */
     public function __construct(
-        $message,
-        $responseBody,
+        string $message,
+        array $responseBody,
         RequestInterface $request,
         ?ResponseInterface $response = null,
-        ?\Exception $previous = null,
+        ?\Throwable $previous = null,
         array $handlerContext = [],
     ) {
         $this->responseBody = $responseBody;
@@ -38,7 +42,10 @@ class ClientException extends RequestException implements ExceptionInterface
         );
     }
 
-    public function getResponseBody()
+    /**
+     * @return array<string, mixed>
+     */
+    public function getResponseBody(): array
     {
         return $this->responseBody;
     }
