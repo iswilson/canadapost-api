@@ -1,14 +1,6 @@
 # Changelog
 
-## [Unreleased]
-
-### Changed
-- **BREAKING:** Class namespace has been changed from `CanadaPost\` to `iswilson\CanadaPost\`. Consumers of this library should update their `use` statements. Package no longer conflicts with `thejacer87/canadapost-api`.
-- **BREAKING:** Params for `Rating::getRates()` changed to accept `Rating\Destination` and `Rating\Parcel`.
-- **BREAKING:** Return value of `Rating::getRates()` changed from multidimensional array to a list of `Rating\PriceQuote` objects.
-- **BREAKING:** Exceptions for API errors thrown by `Rating::getRates()` are now wrapped with `Exception\CanadaPostException`.
-- Origin postal codes are validated and normalized before sending the request. An invalid origin postal code throws `Exception\InvalidArgumentException`.
-- Now uses Canada Post `rate-v4` interface (was `rate-v3`), required for international destinations with postal codes.
+## [0.4.0] - 2026-11-12
 
 ### Added
 - New class `Rating\Destination` added to normalize and validate address data (country code, postal/zip code).
@@ -20,14 +12,22 @@
 - New class `Rating\PriceQuote` added to hold shipping service price quote data. Also provides helper methods for total tax and pre-tax amount.
 - Invalid responses from the Canada Post API now throw `Exception\CanadaPostException`.
 
+### Changed
+- **BREAKING:** Class namespace has been changed from `CanadaPost\` to `iswilson\CanadaPost\`. Consumers of this library should update their `use` statements. Package no longer conflicts with `thejacer87/canadapost-api`.
+- **BREAKING:** Params for `Rating::getRates()` changed to accept `Rating\Destination` and `Rating\Parcel`.
+- **BREAKING:** Return value of `Rating::getRates()` changed from multidimensional array to a list of `Rating\PriceQuote` objects.
+- **BREAKING:** Exceptions for API errors thrown by `Rating::getRates()` are now wrapped with `Exception\CanadaPostException`.
+- Origin postal codes are validated and normalized before sending the request. An invalid origin postal code throws `Exception\InvalidArgumentException`.
+- Now uses Canada Post `rate-v4` interface (was `rate-v3`), required for international destinations with postal codes.
+
+### Deprecated
+- Classes `Shipment`, `NCShipment`, `PostOffice`, `Returns` are unmaintained. No replacement is currently planned. They will be removed before version 1.0.0 is released.
+
 ### Removed
 - Removed discontinued Priority Worldwide services.
 
 ### Fixed
 - US and international price quotes are now supported.
-
-### Deprecated
-- Classes `Shipment`, `NCShipment`, `PostOffice`, `Returns` are unmaintained. No replacement is currently planned. They will be removed before version 1.0.0 is released.
 
 ## [0.3.1] - 2026-10-30
 
