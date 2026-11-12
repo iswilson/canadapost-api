@@ -177,9 +177,24 @@ abstract class ClientBase
         } catch (GuzzleClientException $exception) {
             $response = $exception->getResponse();
 
+            // Suppress libxml errors while parsing error body.
+            $previousSetting = libxml_use_internal_errors(true);
+            try {
+                $responseBody = $this->parseResponse($response);
+            } catch (\Exception) {
+                // Response body is not XML.
+                $responseBody = [];
+            } catch (\ValueError) {
+                // Response body is empty.
+                $responseBody = [];
+            } finally {
+                libxml_clear_errors();
+                libxml_use_internal_errors($previousSetting);
+            }
+
             throw new ClientException(
                 $exception->getMessage(),
-                $this->parseResponse($response),
+                $responseBody,
                 $exception->getRequest(),
                 $response,
                 $exception->getPrevious(),
@@ -372,7 +387,7 @@ abstract class ClientBase
      * @return array<string, mixed>
      *   The response array.
      *
-     * @throws \Exception
+     * @throws \Exception|\ValueError
      */
     protected function parseResponse(Response $response)
     {

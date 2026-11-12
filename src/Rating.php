@@ -2,6 +2,8 @@
 
 namespace iswilson\CanadaPost;
 
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating\Destination;
@@ -33,8 +35,8 @@ class Rating extends ClientBase
      *
      * @return list<PriceQuote>
      *
-     * @throws \GuzzleHttp\Exception\GuzzleException
      * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     public function getRates(
         string $originPostalCode,
@@ -98,15 +100,23 @@ class Rating extends ClientBase
         $payload = $xml->saveXML();
 
         $options['raw_response'] = true;
-        $response = (string) $this->post(
-            "rs/ship/price",
-            [
-                'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
-                'Accept' => 'application/vnd.cpc.ship.rate-v4+xml',
-            ],
-            $payload,
-            $options,
-        );
+        try {
+            $response = (string) $this->post(
+                "rs/ship/price",
+                [
+                    'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
+                    'Accept' => 'application/vnd.cpc.ship.rate-v4+xml',
+                ],
+                $payload,
+                $options,
+            );
+        } catch (GuzzleException $e) {
+            throw new CanadaPostException(
+                'Canada Post API request failed.',
+                httpStatusCode: $e instanceof RequestException ? $e->getResponse()?->getStatusCode() : null,
+                previous: $e,
+            );
+        }
 
         return self::parsePriceQuotes($response);
     }

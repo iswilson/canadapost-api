@@ -2,11 +2,13 @@
 
 namespace iswilson\CanadaPost\Tests;
 
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
+use iswilson\CanadaPost\Exception\ClientException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating;
 use iswilson\CanadaPost\Rating\Destination;
@@ -37,6 +39,56 @@ class RatingTest extends CanadaPostTestBase
     {
         parent::setUp();
         $this->ratingService = new Rating($this->config);
+    }
+
+    public function testInternalServerErrorResponse(): void
+    {
+        try {
+            $this->getRatingResponse('', 500);
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertSame(500, $e->httpStatusCode);
+            self::assertInstanceOf(ServerException::class, $e->getPrevious());
+        }
+    }
+
+    public function testBadRequestAPIResponse(): void
+    {
+        try {
+            $this->getRatingResponse(self::getErrorMessagesResponse(), 400);
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertSame(400, $e->httpStatusCode);
+            $previous = $e->getPrevious();
+            self::assertInstanceOf(ClientException::class, $previous);
+            self::assertArrayHasKey('messages', $previous->getResponseBody());
+        }
+    }
+
+    public function testBadRequestInvalidXmlResponse(): void
+    {
+        try {
+            $this->getRatingResponse('this is not an XML string', 400);
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertSame(400, $e->httpStatusCode);
+            $previous = $e->getPrevious();
+            self::assertInstanceOf(ClientException::class, $previous);
+            self::assertSame([], $previous->getResponseBody());
+        }
+    }
+
+    public function testBadRequestNoXmlResponse(): void
+    {
+        try {
+            $this->getRatingResponse('', 400);
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertSame(400, $e->httpStatusCode);
+            $previous = $e->getPrevious();
+            self::assertInstanceOf(ClientException::class, $previous);
+            self::assertSame([], $previous->getResponseBody());
+        }
     }
 
     /**
@@ -71,7 +123,15 @@ class RatingTest extends CanadaPostTestBase
     {
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('element is missing');
-        $this->getRatingResponse(<<<'EOF'
+        $this->getRatingResponse(self::getErrorMessagesResponse(), 202);
+    }
+
+    /**
+     * Return XML string containing Canada Post API error messages.
+     */
+    private static function getErrorMessagesResponse(): string
+    {
+        return <<<'EOF'
             <messages>
                 <message>
                     <code>7007</code>
@@ -82,7 +142,7 @@ class RatingTest extends CanadaPostTestBase
                     <description>The options are invalid for the selected Service. Please change the options or select another service.</description>
                 </message>
             </messages>
-        EOF);
+        EOF;
     }
 
     /**
@@ -90,10 +150,10 @@ class RatingTest extends CanadaPostTestBase
      *
      * @return list<PriceQuote>
      */
-    private function getRatingResponse(string $xml): array
+    private function getRatingResponse(string $xml, int $statusCode = 200): array
     {
         $mock = new MockHandler([
-            new Response(200, [], $xml),
+            new Response($statusCode, [], $xml),
         ]);
         $handlerStack = HandlerStack::create($mock);
 
