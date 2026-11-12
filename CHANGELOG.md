@@ -20,6 +20,9 @@
 - New class `Rating\PriceQuote` added to hold shipping service price quote data. Also provides helper methods for total tax and pre-tax amount.
 - Invalid responses from the Canada Post API now throw `Exception\CanadaPostException`.
 
+### Removed
+- Removed discontinued Priority Worldwide services.
+
 ### Fixed
 - US and international price quotes are now supported.
 
