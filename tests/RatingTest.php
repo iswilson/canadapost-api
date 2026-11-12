@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace iswilson\CanadaPost\Tests;
 
 use GuzzleHttp\Exception\ServerException;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\ClientException;

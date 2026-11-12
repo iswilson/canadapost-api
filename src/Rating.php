@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace iswilson\CanadaPost;
 
 use GuzzleHttp\Exception\GuzzleException;
@@ -15,6 +17,7 @@ use LSS\Array2XML;
  * Rating contains Canada Post API calls for package rates.
  *
  * @package CanadaPost
+ *
  * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/default.jsf
  */
 class Rating extends ClientBase
