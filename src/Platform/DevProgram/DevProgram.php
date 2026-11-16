@@ -8,6 +8,7 @@ use iswilson\CanadaPost\ClientBase;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating;
 use iswilson\CanadaPost\Tracking;
+use Psr\Log\LoggerInterface;
 
 /**
  * Canada Post Developer Program (XML).
@@ -46,6 +47,7 @@ final readonly class DevProgram
         string $customerNumber,
         ?string $contractId,
         private bool $sandbox,
+        private ?LoggerInterface $logger = null,
     ) {
         // Validate username.
         $this->username = trim($username);
@@ -95,7 +97,7 @@ final readonly class DevProgram
     /**
      * Configuration array for ClientBase class.
      *
-     * @return array{username: string, password: string, customer_number: string, contract_id: ?string, env: string}
+     * @return array{username: string, password: string, customer_number: string, contract_id: ?string, env: string, logger: ?LoggerInterface}
      */
     private function getConfig(): array
     {
@@ -105,6 +107,7 @@ final readonly class DevProgram
             'customer_number' => $this->customerNumber,
             'contract_id' => $this->contractId,
             'env' => $this->sandbox ? ClientBase::ENV_DEVELOPMENT : ClientBase::ENV_PRODUCTION,
+            'logger' => $this->logger,
         ];
     }
 }

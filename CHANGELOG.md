@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Optional PSR-3 logger added to `CanadaPost::devProgram()`.
+
 ## [0.4.0] - 2026-11-12
 
 ### Added

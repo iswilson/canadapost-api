@@ -2,6 +2,9 @@
 
 namespace iswilson\CanadaPost;
 
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\MessageFormatter;
+use GuzzleHttp\Middleware;
 use iswilson\CanadaPost\Exception\ClientException;
 use DateTime;
 use GuzzleHttp\Client as GuzzleClient;
@@ -10,6 +13,8 @@ use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use LSS\XML2Array;
 use Psr\Http\Message\StreamInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLevel;
 
 /**
  * Provides a base class for Canada Post API clients.
@@ -71,6 +76,13 @@ abstract class ClientBase
     protected $contractId;
 
     /**
+     * Logger instance.
+     *
+     * @var \Psr\Log\LoggerInterface|null
+     */
+    protected ?LoggerInterface $logger = null;
+
+    /**
      * ClientBase constructor.
      *
      * @param array $config
@@ -85,6 +97,7 @@ abstract class ClientBase
         );
         $this->setCredentials($config);
         $this->baseUrl($this->config);
+        $this->logger = $config['logger'] ?? null;
     }
 
     /**
@@ -405,15 +418,26 @@ abstract class ClientBase
      *
      * @return \GuzzleHttp\Client
      */
-    protected function buildClient(array &$options)
+    protected function buildClient(array &$options): GuzzleClient
     {
-        if (!isset($options['handler'])) {
-            return new GuzzleClient();
+        $handler = $options['handler'] ?? null;
+        // Clone handler to prevent adding multiple copies of log middleware.
+        $handlerStack = ($handler instanceof HandlerStack)
+            ? clone $handler
+            : HandlerStack::create($handler);
+        unset($options['handler']);
+
+        // Log middleware goes on bottom of stack so that HTTP 4xx/5xx are
+        // logged as errors.
+        if ($this->logger !== null) {
+            $handlerStack->unshift(Middleware::log(
+                $this->logger,
+                new MessageFormatter("{method} {uri} {code}"),
+                LogLevel::DEBUG,
+            ));
         }
 
-        $client = new GuzzleClient(['handler' => $options['handler']]);
-        unset($options['handler']);
-        return $client;
+        return new GuzzleClient(['handler' => $handlerStack]);
     }
 
     /**

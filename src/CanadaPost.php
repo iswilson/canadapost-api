@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace iswilson\CanadaPost;
 
 use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
+use Psr\Log\LoggerInterface;
 
 /**
  * Create clients for Canada Post platforms.
@@ -28,6 +29,7 @@ final class CanadaPost
         string $customerNumber,
         ?string $contractId = null,
         bool $sandbox = true,
+        ?LoggerInterface $logger = null,
     ): DevProgram {
         return new DevProgram(
             $username,
@@ -35,6 +37,7 @@ final class CanadaPost
             $customerNumber,
             $contractId,
             $sandbox,
+            $logger,
         );
     }
 }
