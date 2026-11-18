@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace iswilson\CanadaPost\Tests\Traits;
+
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+/**
+ * Create and return handler stack with history middleware.
+ */
+trait HttpMockHandlerTrait
+{
+    /**
+     * @param array{} $container
+     * @param list<ResponseInterface|\Throwable> $responses
+     *
+     * @param-out list<array{
+     *     request: RequestInterface,
+     *     response: ?ResponseInterface,
+     *     error: mixed,
+     *     options: array<string, mixed>,
+     * }> $container
+     */
+    private function handlerStack(array &$container, array $responses): HandlerStack
+    {
+        $mock = new MockHandler($responses);
+        $handlerStack = HandlerStack::create($mock);
+
+        // Add history middleware that will record each request.
+        $history = Middleware::history($container); // @phpstan-ignore paramOut.type
+        $handlerStack->push($history);
+
+        return $handlerStack;
+    }
+}

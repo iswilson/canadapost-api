@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost;
 
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
@@ -20,8 +19,14 @@ use LSS\Array2XML;
  *
  * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/default.jsf
  */
-class Rating extends ClientBase
+class Rating
 {
+    public function __construct(
+        protected readonly Transport $transport,
+        protected readonly string $customerNumber,
+        protected readonly ?string $contractId = null,
+    ) {}
+
     /**
      * Get the shipping rates for the given locations and weight.
      *
@@ -90,8 +95,8 @@ class Rating extends ClientBase
             $content['options']['option'] = $this->parseOptionCodes($options);
         }
 
-        if (isset($this->config['contract_id'])) {
-            $content['contract-id'] = $this->config['contract_id'];
+        if ($this->contractId !== null) {
+            $content['contract-id'] = $this->contractId;
         }
 
         $xml = Array2XML::createXML('mailing-scenario', $content);
@@ -102,26 +107,29 @@ class Rating extends ClientBase
         );
         $payload = $xml->saveXML();
 
-        $options['raw_response'] = true;
-        try {
-            $response = (string) $this->post(
-                "rs/ship/price",
-                [
-                    'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
-                    'Accept' => 'application/vnd.cpc.ship.rate-v4+xml',
-                ],
-                $payload,
-                $options,
-            );
-        } catch (GuzzleException $e) {
+        $response = $this->transport->send(
+            'POST',
+            "rs/ship/price",
+            [
+                'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
+                'Accept' => 'application/vnd.cpc.ship.rate-v4+xml',
+            ],
+            $payload,
+        );
+
+        if ($response->getStatusCode() === 200) {
+            return self::parsePriceQuotes((string) $response->getBody());
+        } elseif ($response->getStatusCode() >= 400) {
             throw new CanadaPostException(
                 'Canada Post API request failed.',
-                httpStatusCode: $e instanceof RequestException ? $e->getResponse()?->getStatusCode() : null,
-                previous: $e,
+                httpStatusCode: $response->getStatusCode(),
             );
         }
 
-        return self::parsePriceQuotes($response);
+        throw new CanadaPostException(
+            sprintf('Unexpected status code: %d.', $response->getStatusCode()),
+            httpStatusCode: $response->getStatusCode(),
+        );
     }
 
     /**
@@ -200,7 +208,7 @@ class Rating extends ClientBase
      *
      * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
      */
-    public static function getServiceCodes()
+    public static function getServiceCodes(): array
     {
         return [
             'DOM.EP' => 'Expedited Parcel',
@@ -294,5 +302,63 @@ class Rating extends ClientBase
         // Ensure cents are 2 digits long and stitch back together.
         $cents = str_pad((string) $cents, 2, '0');
         return (int) ($dollars . $cents);
+    }
+
+    /**
+     * Get the Canada Post-specific option codes.
+     *
+     * @return array<string, string>
+     *   The array of option codes.
+     *
+     * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
+     */
+    public static function getOptionCodes(): array
+    {
+        return [
+            'SO' => 'Signature (SO)',
+            'PA18' => 'Proof of Age Required - 18 (PA18)',
+            'PA19' => 'Proof of Age Required - 19 (PA19)',
+            'HFP' => 'Card for pickup (HFP)',
+            'DNS' => 'Do not safe drop (DNS)',
+            'LAD' => 'Leave at door - do not card (LAD)',
+        ];
+    }
+
+    /**
+     * Helper function to extract the option codes.
+     *
+     * @param array{option_codes: list<string>} $options
+     *   The options array.
+     *
+     * @return list<array{option-code: string}>
+     *   The list of options with the option-code.
+     *
+     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     */
+    protected function parseOptionCodes(array $options): array
+    {
+        $valid_options = [];
+        foreach ($options['option_codes'] as $optionCode) {
+            if (!array_key_exists(strtoupper($optionCode), self::getOptionCodes())) {
+                $message = sprintf(
+                    'Unsupported option code: "%s". Supported options are %s',
+                    $optionCode,
+                    implode(', ', array_keys(self::getOptionCodes())),
+                );
+                throw new InvalidArgumentException($message);
+            }
+            // @todo Perhaps we should check for conflicts here, might be overkill.
+            // From Canada Post docs:
+            // There are some options that can be applied to a shipment that
+            // conflict with the presence of another option. You can use the
+            // "Get Option" call in advance to check the contents of the
+            // <conflicting-options> group from a Get Option call for options
+            // selected by end users or options available for a given service.
+            $valid_options[] = [
+                'option-code' => strtoupper($optionCode),
+            ];
+        }
+
+        return $valid_options;
     }
 }

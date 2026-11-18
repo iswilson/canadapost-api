@@ -19,8 +19,22 @@ final class CanadaPost
      *
      * @param string $username
      *   Developer Program API user ID.
+     * @param string $password
+     *   Developer Program API password.
+     * @param string $customerNumber
+     *   Customer number of the owner of the mail (mailed on behalf of customer).
+     * @param string|null $contractId
+     *   Optional contract ID for commercial customers.
+     * @param bool $sandbox
+     *   Platform environment, default to sandbox/development.
+     * @param \Psr\Log\LoggerInterface|null $logger
+     *   Optional logging interface.
+     * @param ?callable $handler
+     *   @internal Optional Guzzle handler for tests.
      *
      * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     *
+     * @return \iswilson\CanadaPost\Platform\DevProgram\DevProgram
      */
     public static function devProgram(
         string $username,
@@ -30,14 +44,16 @@ final class CanadaPost
         ?string $contractId = null,
         bool $sandbox = true,
         ?LoggerInterface $logger = null,
+        ?callable $handler = null,
     ): DevProgram {
         return new DevProgram(
-            $username,
-            $password,
-            $customerNumber,
-            $contractId,
-            $sandbox,
-            $logger,
+            username: $username,
+            password: $password,
+            customerNumber: $customerNumber,
+            contractId: $contractId,
+            sandbox: $sandbox,
+            logger: $logger,
+            handler: $handler,
         );
     }
 }

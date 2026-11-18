@@ -24,7 +24,7 @@ final readonly class Transport
     private ClientInterface $client;
 
     /**
-     * @param array{connect_timeout?: float, handler?: callable, timeout?: float} $guzzleOptions
+     * @param array{connect_timeout?: float, handler?: ?callable, timeout?: float} $guzzleOptions
      *   Guzzle client options {@see https://docs.guzzlephp.org/en/stable/request-options.html}.
      */
     public function __construct(

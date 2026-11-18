@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 
+use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
-use iswilson\CanadaPost\Tests\Traits\CaptureRequestTrait;
+use iswilson\CanadaPost\Rating\Destination;
+use iswilson\CanadaPost\Rating\Parcel;
+use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 #[CoversClass(DevProgram::class)]
 #[Group('DevProgram')]
 final class DevProgramTest extends TestCase
 {
-    use CaptureRequestTrait;
+    use HttpMockHandlerTrait;
 
     public function testUsernameIsRequired(): void
     {
@@ -71,13 +75,27 @@ final class DevProgramTest extends TestCase
 
     public function testCredentialsAreTrimmedAndPresent(): void
     {
-        $request = $this->getSentRequest(new DevProgram(' username ', ' password ', '123456789', null, true));
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $platform = new DevProgram(' username ', ' password ', '123456789', null, true, handler: $handlerStack);
+        $request = $this->getSentRequest($platform, $historyContainer);
+
         self::assertSame(sprintf('Basic %s', base64_encode('username:password')), $request->getHeaderLine('Authorization'));
     }
 
     public function testCustomerNumberAndContractIdAreTrimmedAndPresent(): void
     {
-        $request = $this->getSentRequest(new DevProgram('username', 'password', ' 123456789 ', ' 987654321 ', true));
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $platform = new DevProgram('username', 'password', ' 123456789 ', ' 987654321 ', true, handler: $handlerStack);
+        $request = $this->getSentRequest($platform, $historyContainer);
+
         $body = new \DOMDocument();
         $body->loadXML((string) $request->getBody());
         self::assertSame('123456789', $body->getElementsByTagName('customer-number')->item(0)?->textContent);
@@ -87,7 +105,14 @@ final class DevProgramTest extends TestCase
     #[DataProvider('getEmptyOrNullContractIds')]
     public function testContractIdIsAbsentIfEmptyOrNull(?string $contractId): void
     {
-        $request = $this->getSentRequest(new DevProgram('username', 'password', '123456789', $contractId, true));
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $platform = new DevProgram('username', 'password', '123456789', $contractId, true, handler: $handlerStack);
+        $request = $this->getSentRequest($platform, $historyContainer);
+
         $body = new \DOMDocument();
         $body->loadXML((string) $request->getBody());
         self::assertSame(0, $body->getElementsByTagName('contract-id')->length);
@@ -103,13 +128,43 @@ final class DevProgramTest extends TestCase
 
     public function testSandboxModeUsesCorrectHost(): void
     {
-        $request = $this->getSentRequest(new DevProgram('username', 'password', '123456789', null, true));
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $platform = new DevProgram('username', 'password', '123456789', null, true, handler: $handlerStack);
+        $request = $this->getSentRequest($platform, $historyContainer);
+
         self::assertSame('ct.soa-gw.canadapost.ca', $request->getUri()->getHost());
     }
 
     public function testProductionModeUsesCorrectHost(): void
     {
-        $request = $this->getSentRequest(new DevProgram('username', 'password', '123456789', null, false));
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $platform = new DevProgram('username', 'password', '123456789', null, false, handler: $handlerStack);
+        $request = $this->getSentRequest($platform, $historyContainer);
+
         self::assertSame('soa-gw.canadapost.ca', $request->getUri()->getHost());
+    }
+
+    /**
+     * @param \iswilson\CanadaPost\Platform\DevProgram\DevProgram $platform
+     * @param list<mixed> $historyContainer
+     *   Passed by reference, filled by getRates().
+     *
+     * @return \Psr\Http\Message\RequestInterface
+     */
+    private function getSentRequest(DevProgram $platform, array &$historyContainer): RequestInterface
+    {
+        $platform
+            ->rating()
+            ->getRates('H0H0H0', new Destination('CA', 'H0H0H0'), new Parcel(500));
+
+        return $historyContainer[0]['request'];
     }
 }

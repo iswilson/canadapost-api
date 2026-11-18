@@ -15,6 +15,9 @@ use Psr\Log\LoggerInterface;
  */
 final readonly class DevProgram
 {
+    public const string BASE_URL_DEVELOPMENT = 'https://ct.soa-gw.canadapost.ca';
+    public const string BASE_URL_PRODUCTION = 'https://soa-gw.canadapost.ca';
+
     /**
      * Developer Program API user ID.
      */
@@ -35,6 +38,8 @@ final readonly class DevProgram
      */
     private ?string $contractId;
 
+    private Transport $transport;
+
     /**
      * @internal Use CanadaPost::devProgram().
      *
@@ -48,6 +53,8 @@ final readonly class DevProgram
         ?string $contractId,
         private bool $sandbox,
         private ?LoggerInterface $logger = null,
+        /** @internal Optional Guzzle handler for tests. */
+        ?callable $handler = null,
     ) {
         // Validate username.
         $this->username = trim($username);
@@ -76,6 +83,14 @@ final readonly class DevProgram
         if ($this->contractId !== null && preg_match('/^[0-9]{1,10}$/', $this->contractId) !== 1) {
             throw new InvalidArgumentException(sprintf('Contract ID is invalid, got: %s.', $contractId));
         }
+
+        $this->transport = new Transport(
+            $this->sandbox ? self::BASE_URL_DEVELOPMENT : self::BASE_URL_PRODUCTION,
+            $this->username,
+            $this->password,
+            guzzleOptions: ['handler' => $handler],
+            logger: $logger,
+        );
     }
 
     /**
@@ -83,7 +98,7 @@ final readonly class DevProgram
      */
     public function rating(): Rating
     {
-        return new Rating($this->getConfig());
+        return new Rating($this->transport, $this->customerNumber, $this->contractId);
     }
 
     /**

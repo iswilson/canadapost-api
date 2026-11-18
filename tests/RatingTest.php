@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Tests;
 
-use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
-use iswilson\CanadaPost\Exception\ClientException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Rating;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
+use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Rating Class Tests.
@@ -27,20 +28,16 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversClass(Rating::class)]
 #[CoversMethod(Rating::class, 'getRates')]
 #[Group('Rating')]
-class RatingTest extends CanadaPostTestBase
+class RatingTest extends TestCase
 {
-    /**
-     * The Rating service.
-     */
-    protected Rating $ratingService;
+    use HttpMockHandlerTrait;
 
-    /**
-     * Build the $ratingService to be tested.
-     */
-    public function setUp(): void
+    private function rating(callable $handler): Rating
     {
-        parent::setUp();
-        $this->ratingService = new Rating($this->config);
+        return new Rating(
+            new Transport('https://localhost', 'username', 'password', ['handler' => $handler]),
+            '123456789',
+        );
     }
 
     public function testInternalServerErrorResponse(): void
@@ -50,7 +47,6 @@ class RatingTest extends CanadaPostTestBase
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(500, $e->httpStatusCode);
-            self::assertInstanceOf(ServerException::class, $e->getPrevious());
         }
     }
 
@@ -61,9 +57,6 @@ class RatingTest extends CanadaPostTestBase
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(400, $e->httpStatusCode);
-            $previous = $e->getPrevious();
-            self::assertInstanceOf(ClientException::class, $previous);
-            self::assertArrayHasKey('messages', $previous->getResponseBody());
         }
     }
 
@@ -74,9 +67,6 @@ class RatingTest extends CanadaPostTestBase
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(400, $e->httpStatusCode);
-            $previous = $e->getPrevious();
-            self::assertInstanceOf(ClientException::class, $previous);
-            self::assertSame([], $previous->getResponseBody());
         }
     }
 
@@ -87,10 +77,40 @@ class RatingTest extends CanadaPostTestBase
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(400, $e->httpStatusCode);
-            $previous = $e->getPrevious();
-            self::assertInstanceOf(ClientException::class, $previous);
-            self::assertSame([], $previous->getResponseBody());
         }
+    }
+
+    public function testResponseWithUnexpectedStatusCode(): void
+    {
+        try {
+            $this->getRatingResponse('', 202);
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertSame(202, $e->httpStatusCode);
+            self::assertStringContainsString('Unexpected status code', $e->getMessage());
+        }
+    }
+
+    public function testOptionCodesAreCapitalized(): void
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+        ]);
+
+        $this->rating($handlerStack)->getRates(
+            'H0H0H0',
+            new Destination('CA', 'H0H0H0'),
+            new Parcel(500),
+            options: [
+                'option_codes' => ['so'],
+            ],
+        );
+        $request = $historyContainer[0]['request'];
+
+        $body = new \DOMDocument();
+        $body->loadXML((string) $request->getBody());
+        self::assertSame('SO', $body->getElementsByTagName('option-code')->item(0)?->textContent);
     }
 
     /**
@@ -125,7 +145,7 @@ class RatingTest extends CanadaPostTestBase
     {
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('element is missing');
-        $this->getRatingResponse(self::getErrorMessagesResponse(), 202);
+        $this->getRatingResponse(self::getErrorMessagesResponse());
     }
 
     /**
@@ -159,11 +179,10 @@ class RatingTest extends CanadaPostTestBase
         ]);
         $handlerStack = HandlerStack::create($mock);
 
-        return $this->ratingService->getRates(
+        return $this->rating($handlerStack)->getRates(
             'H0H0H0',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            ['handler' => $handlerStack],
         );
     }
 
@@ -395,7 +414,7 @@ class RatingTest extends CanadaPostTestBase
         $history = Middleware::history($historyContainer);
         $handlerStack->push($history);
 
-        $this->ratingService->getRates($originPostalCode, $destination, $parcel, ['handler' => $handlerStack]);
+        $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);
 
         // Get request body from history.
         $requestBody = new \DOMDocument();
