@@ -4,10 +4,11 @@
 
 ### Added
 - Optional PSR-3 logger added to `CanadaPost::devProgram()`.
-- New class `Transport` added to handle Guzzle requests.
+- New class `Platform\DevProgram\Transport` added to handle Guzzle requests.
+- API Error codes / messages are included in `Exception\CanadaPostException`.
 
 ### Changed
-- **BREAKING:** `Rating` constructor changed to use `Transport` and class no longer extends `ClientBase`.
+- **BREAKING:** `Rating` constructor changed to use `Platform\DevProgram\Transport` and class no longer extends `ClientBase`.
 
 ### Fixed
 - Lowercase option codes are converted to uppercase before transmitting request.

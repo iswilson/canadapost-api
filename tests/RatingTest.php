@@ -57,6 +57,7 @@ class RatingTest extends TestCase
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(400, $e->httpStatusCode);
+            self::assertCount(2, $e->errors);
         }
     }
 
@@ -80,14 +81,21 @@ class RatingTest extends TestCase
         }
     }
 
-    public function testResponseWithUnexpectedStatusCode(): void
+    public function testTryAgainLaterResponse(): void
     {
         try {
-            $this->getRatingResponse('', 202);
+            $this->getRatingResponse(<<<'EOF'
+                <messages>
+                    <message>
+                        <code>7010</code>
+                        <description>We are unable to provide you with a price at this time. Please try again later.</description>
+                    </message>
+                </messages>
+            EOF, 202);
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(202, $e->httpStatusCode);
-            self::assertStringContainsString('Unexpected status code', $e->getMessage());
+            self::assertTrue($e->hasErrorCode('7010'));
         }
     }
 
@@ -141,11 +149,35 @@ class RatingTest extends TestCase
         $this->getRatingResponse('this is not an XML string');
     }
 
-    public function testValidResponseWithMissingPriceQuotes(): void
+    public function testUnknownXmlRootElement(): void
     {
         $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('element is missing');
-        $this->getRatingResponse(self::getErrorMessagesResponse());
+        $this->expectExceptionMessage('returned valid XML but required elements are missing');
+        $this->getRatingResponse('<testing></testing>');
+    }
+
+    public function testResponseWithMultipleErrorMessages(): void
+    {
+        try {
+            $this->getRatingResponse(self::getErrorMessagesResponse());
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertCount(2, $e->errors);
+            self::assertTrue($e->hasErrorCode('7007'));
+            self::assertTrue($e->hasErrorCode('1722'));
+            self::assertStringContainsString('7007, 1722', $e->getMessage());
+        }
+    }
+
+    public function testErrorResponseWithNoErrorMessages(): void
+    {
+        try {
+            $this->getRatingResponse('<messages></messages>');
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertCount(0, $e->errors);
+            self::assertStringContainsString('no error code', $e->getMessage());
+        }
     }
 
     /**

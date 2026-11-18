@@ -117,23 +117,61 @@ class Rating
             $payload,
         );
 
-        if ($response->getStatusCode() === 200) {
-            return self::parsePriceQuotes((string) $response->getBody());
-        } elseif ($response->getStatusCode() >= 400) {
+        $responseBody = (string) $response->getBody();
+        // Response is empty.
+        if ($responseBody === '') {
             throw new CanadaPostException(
-                'Canada Post API request failed.',
+                'Canada Post API returned an empty response.',
                 httpStatusCode: $response->getStatusCode(),
             );
         }
 
+        $doc = self::loadXml($responseBody);
+        // Response is not valid XML.
+        if ($doc === null) {
+            throw new CanadaPostException(
+                'Canada Post API returned invalid XML.',
+                httpStatusCode: $response->getStatusCode(),
+            );
+        }
+
+        switch ($doc->documentElement?->localName) {
+            case 'price-quotes':
+                return self::parsePriceQuotes($doc);
+            case 'messages':
+                $errorMessages = self::parseErrorMessages($doc);
+                $errorCodes = (count($errorMessages) > 0) ? array_column($errorMessages, 'code') : ['no error code'];
+
+                throw new CanadaPostException(
+                    sprintf('Canada Post API request failed (%s).', implode(', ', $errorCodes)),
+                    errors: $errorMessages,
+                    httpStatusCode: $response->getStatusCode(),
+                );
+        }
+
+        // Response is valid XML but doesn't contain any elements we know how
+        // to parse.
         throw new CanadaPostException(
-            sprintf('Unexpected status code: %d.', $response->getStatusCode()),
+            'Canada Post API returned valid XML but required elements are missing.',
             httpStatusCode: $response->getStatusCode(),
         );
     }
 
+    private static function loadXml(string $xml): ?\DOMDocument
+    {
+        $doc = new \DOMDocument();
+
+        // Suppress libxml errors while reading data.
+        $previousSetting = libxml_use_internal_errors(true);
+        $loaded = $doc->loadXML($xml);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousSetting);
+
+        return $loaded ? $doc : null;
+    }
+
     /**
-     * Parse an XML response string into an array of PriceQuote.
+     * Parse an XML response into an array of PriceQuote.
      *
      * @internal
      *
@@ -141,31 +179,8 @@ class Rating
      *
      * @throws \iswilson\CanadaPost\Exception\CanadaPostException
      */
-    public static function parsePriceQuotes(string $response): array
+    public static function parsePriceQuotes(\DOMDocument $doc): array
     {
-        // Response is empty.
-        if ($response === '') {
-            throw new CanadaPostException('Canada Post API returned an empty response.');
-        }
-
-        $doc = new \DOMDocument();
-
-        // Suppress libxml errors while reading response data.
-        $previousSetting = libxml_use_internal_errors(true);
-        $responseLoaded = $doc->loadXML($response);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previousSetting);
-
-        // Response is not valid XML.
-        if (!$responseLoaded) {
-            throw new CanadaPostException('Canada Post API returned invalid XML.');
-        }
-
-        // Response is valid XML but doesn't contain price-quotes element.
-        if ($doc->documentElement?->localName !== 'price-quotes') {
-            throw new CanadaPostException('Canada Post API returned valid XML but <price-quotes> element is missing.');
-        }
-
         $priceQuotes = [];
         // Extract price quote data.
         $nodes = $doc->getElementsByTagName('price-quote');
@@ -198,6 +213,28 @@ class Rating
         }
 
         return $priceQuotes;
+    }
+
+    /**
+     * Parse an XML response into an array of error codes + messages.
+     *
+     * @internal
+     *
+     * @return list<array{code: string, message: string}>
+     */
+    public static function parseErrorMessages(\DOMDocument $doc): array
+    {
+        $messages = [];
+        // Extract error message data.
+        $nodes = $doc->getElementsByTagName('message');
+        foreach ($nodes as $node) {
+            $messages[] = [
+                'code' => $node->getElementsByTagName('code')->item(0)->textContent ?? '',
+                'message' => $node->getElementsByTagName('description')->item(0)->textContent ?? '',
+            ];
+        }
+
+        return $messages;
     }
 
     /**
