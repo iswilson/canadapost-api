@@ -236,6 +236,13 @@ class TransportTest extends TestCase
         self::assertStringNotContainsString(base64_encode('username:password'), $spyLogger->records[0]['message']);
     }
 
+    public function testOriginalRequestIsUnmodifiedByLogging(): void
+    {
+        $spyLogger = new SpyLogger();
+        $request = $this->captureHttpTransaction('POST', 'test', logger: $spyLogger)['request'];
+        self::assertSame('Basic ' . base64_encode('username:password'), $request->getHeaderLine('Authorization'));
+    }
+
     /**
      * @param array<string, mixed> $guzzleOptions
      */

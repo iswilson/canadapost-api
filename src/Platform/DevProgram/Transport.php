@@ -13,6 +13,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use iswilson\CanadaPost\Exception\CanadaPostException;
+use iswilson\CanadaPost\Logging\RedactingMessageFormatter;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -20,7 +21,7 @@ use Psr\Log\LogLevel;
 final readonly class Transport
 {
     /** @see \GuzzleHttp\MessageFormatter for variable substitutions. */
-    private const string LOG_FORMAT = '{method} {uri} {code}';
+    private const string LOG_FORMAT = MessageFormatter::DEBUG;
     private ClientInterface $client;
 
     /**
@@ -58,7 +59,9 @@ final readonly class Transport
         if ($this->logger !== null) {
             $handlerStack->unshift(Middleware::log(
                 $this->logger,
-                new MessageFormatter(self::LOG_FORMAT),
+                new RedactingMessageFormatter(
+                    new MessageFormatter(self::LOG_FORMAT),
+                ),
                 LogLevel::DEBUG,
             ), 'canadapost_api_log');
         }
