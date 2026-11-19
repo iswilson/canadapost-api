@@ -1,14 +1,24 @@
 # Changelog
 
-## [Unreleased]
+## [0.5.0] - 2026-11-19
 
 ### Added
 - Optional PSR-3 logger added to `CanadaPost::devProgram()`.
+- Successful rating requests/responses are included logged at debug level. Failed requests are logged at error. The following is replaced with \[REDACTED\]:
+    - HTTP request headers: authorization, cookie, proxy-authorization.
+    - HTTP response headers: set-cookie.
+    - XML fields in request/response body with customer PII: postal code, zip code
 - New class `Platform\DevProgram\Transport` added to handle Guzzle requests.
-- API Error codes / messages are included in `Exception\CanadaPostException`.
+- API error codes / messages are included in `Exception\CanadaPostException`.
+- Optional timeout parameter added to `CanadaPost::devProgram()` (default 30 seconds).
 
 ### Changed
 - **BREAKING:** `Rating` constructor changed to use `Platform\DevProgram\Transport` and class no longer extends `ClientBase`.
+- **BREAKING:** `Rating` no longer passes options directly to Guzzle options (e.g. handler, timeout), use the new `timeout` parameter on `CanadaPost::devProgram()`.
+- **BREAKING:** Guzzle exception on HTTP 4xx/5xx no longer included as `Exception\CanadaPostException::getPrevious()`.
+- **BREAKING:** `Rating::parsePriceQuotes()` now takes `\DOMDocument` instead of string.
+- Success or error is detected from XML content in the response body. `Exception\CanadaPostException` will be thrown for API errors and invalid / empty / unrecognized XML. 
+- Error messages no longer include input values.
 
 ### Fixed
 - Lowercase service/option codes are converted to uppercase before transmitting request.
@@ -52,3 +62,9 @@
 ### Changed
 - Forked package from thejacer87/canadapost-api to iswilson/canadapost-api.
 - Now requires PHP 8.3+ and Guzzle 7.
+
+[Unreleased]: https://github.com/iswilson/canadapost-api/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/iswilson/canadapost-api/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/iswilson/canadapost-api/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/iswilson/canadapost-api/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/iswilson/canadapost-api/releases/tag/v0.3.0
