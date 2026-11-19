@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- **BREAKING:** Removed deprecated classes `NCShipment`, `PostOffice`, `Returns`, `Shipment`.
+
 ## [0.5.0] - 2026-11-19
 
 ### Added

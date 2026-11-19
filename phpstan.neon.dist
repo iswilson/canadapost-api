@@ -8,17 +8,6 @@ parameters:
     excludePaths:
         analyse:
             - src/ClientBase.php
-            - src/NCShipment.php
-            - src/PostOffice.php
-            - src/Returns.php
             - src/ServiceInfo.php
-            - src/Shipment.php
             - src/Tracking.php
             - tests/Mocks
-            - tests/CanadaPostTestBase.php
-            - tests/NCShipmentTest.php
-            - tests/PostOfficeTest.php
-            - tests/ReturnsTest.php
-            - tests/ServiceInfoTest.php
-            - tests/ShipmentTest.php
-            - tests/TrackingTest.php
