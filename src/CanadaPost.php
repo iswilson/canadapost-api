@@ -29,8 +29,10 @@ final class CanadaPost
      *   Platform environment, default to sandbox/development.
      * @param \Psr\Log\LoggerInterface|null $logger
      *   Optional logging interface.
-     * @param ?callable $handler
-     *   @internal Optional Guzzle handler for tests.
+     * @param float|null $timeout
+     *   Total timeout of the request in seconds (default 30).
+     * @param callable|null $handler
+     *   Internal: Optional Guzzle handler for tests.
      *
      * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      *
@@ -44,6 +46,7 @@ final class CanadaPost
         ?string $contractId = null,
         bool $sandbox = true,
         ?LoggerInterface $logger = null,
+        ?float $timeout = null,
         ?callable $handler = null,
     ): DevProgram {
         return new DevProgram(
@@ -53,6 +56,7 @@ final class CanadaPost
             contractId: $contractId,
             sandbox: $sandbox,
             logger: $logger,
+            timeout: $timeout,
             handler: $handler,
         );
     }

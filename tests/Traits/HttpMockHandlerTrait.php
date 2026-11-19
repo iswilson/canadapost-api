@@ -21,7 +21,7 @@ trait HttpMockHandlerTrait
      *
      * @param-out list<array{
      *     request: RequestInterface,
-     *     response: ?ResponseInterface,
+     *     response: ResponseInterface|null,
      *     error: mixed,
      *     options: array<string, mixed>,
      * }> $container

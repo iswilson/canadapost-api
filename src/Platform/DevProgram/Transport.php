@@ -13,6 +13,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use iswilson\CanadaPost\Exception\CanadaPostException;
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Logging\RedactingMessageFormatter;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -20,12 +21,13 @@ use Psr\Log\LogLevel;
 
 final readonly class Transport
 {
+    public const float DEFAULT_TIMEOUT = 30;
     /** @see \GuzzleHttp\MessageFormatter for variable substitutions. */
     private const string LOG_FORMAT = MessageFormatter::DEBUG;
     private ClientInterface $client;
 
     /**
-     * @param array{connect_timeout?: float, handler?: ?callable, timeout?: float} $guzzleOptions
+     * @param array{handler?: callable|null} $guzzleOptions
      *   Guzzle client options {@see https://docs.guzzlephp.org/en/stable/request-options.html}.
      */
     public function __construct(
@@ -34,13 +36,19 @@ final readonly class Transport
         #[\SensitiveParameter]
         string $password,
         array $guzzleOptions = [],
+        ?float $timeout = null,
         private ?LoggerInterface $logger = null,
     ) {
+        if ($timeout !== null && $timeout < 0) {
+            throw new InvalidArgumentException('Timeout must be zero or greater.');
+        }
+
         $handlerStack = $this->buildHandlerStack($guzzleOptions['handler'] ?? null);
         $this->client = new GuzzleClient([
             'handler' => $handlerStack,
             'base_uri' => $baseUrl,
             'auth' => [$username, $password],
+            'timeout' => $timeout ?? self::DEFAULT_TIMEOUT,
         ] + $guzzleOptions);
     }
 
@@ -72,7 +80,7 @@ final readonly class Transport
     /**
      * Build and send HTTP request.
      *
-     * @param array<string, string|list<string>> $headers
+     * @param array<string, list<string>|string> $headers
      *   HTTP headers.
      */
     public function send(

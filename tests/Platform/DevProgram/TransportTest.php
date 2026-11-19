@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 
 use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\InvalidArgumentException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -76,16 +76,31 @@ class TransportTest extends TestCase
         self::assertSame('', (string) $request->getBody());
     }
 
-    public function testRequestTimeoutsAreOverridden(): void
+    public function testDefaultRequestTimeout(): void
     {
-        $guzzleOptions = [
-            'connect_timeout' => 5,
-            'timeout' => 15,
-        ];
-        $requestOptions = $this->captureHttpTransaction('POST', 'test', guzzleOptions: $guzzleOptions)['options'];
-        foreach ($guzzleOptions as $option => $value) {
-            self::assertSame($value, $requestOptions[$option]);
-        }
+        $requestOptions = $this->captureHttpTransaction('POST', 'test')['options'];
+        self::assertSame(30.0, $requestOptions['timeout']);
+    }
+
+    #[DataProvider('getTimeoutValues')]
+    public function testRequestTimeoutIsOverridden(float $timeout): void
+    {
+        $requestOptions = $this->captureHttpTransaction('POST', 'test', timeout: $timeout)['options'];
+        self::assertSame($timeout, $requestOptions['timeout']);
+    }
+
+    /** @return iterable<string, array{float}> */
+    public static function getTimeoutValues(): iterable
+    {
+        yield 'Zero seconds' => [0];
+        yield 'Five seconds' => [5];
+    }
+
+    public function testNegativeRequestTimeout(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->captureHttpTransaction('POST', 'test', timeout: -5);
+        $this->expectExceptionMessage('must be zero or greater');
     }
 
     public function testHttp200Response(): void
@@ -251,13 +266,14 @@ class TransportTest extends TestCase
         string $username = 'username',
         string $password = 'password',
         array $guzzleOptions = [],
+        ?float $timeout = null,
         ?LoggerInterface $logger = null,
     ): Transport {
-        return new Transport($baseUrl, $username, $password, $guzzleOptions, $logger);
+        return new Transport($baseUrl, $username, $password, $guzzleOptions, $timeout, $logger);
     }
 
     /**
-     * @param array<string, string|list<string>> $headers
+     * @param array<string, list<string>|string> $headers
      * @param array<string, mixed> $guzzleOptions
      *
      * @return array{
@@ -273,6 +289,7 @@ class TransportTest extends TestCase
         array $headers = [],
         ?string $body = null,
         array $guzzleOptions = [],
+        ?float $timeout = null,
         ResponseInterface|\Throwable $mockResponse = new Response(),
         ?LoggerInterface $logger = null,
     ): array {
@@ -286,7 +303,7 @@ class TransportTest extends TestCase
 
         // Add key 'result' for response after it passed through send.
         $result = $this
-            ->transport(guzzleOptions: ['handler' => $handlerStack] + $guzzleOptions, logger: $logger)
+            ->transport(guzzleOptions: ['handler' => $handlerStack] + $guzzleOptions, timeout: $timeout, logger: $logger)
             ->send($method, $path, $headers, $body);
         $historyContainer[0]['result'] = $result;
 

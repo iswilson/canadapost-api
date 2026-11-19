@@ -12,9 +12,9 @@ use Psr\Http\Message\ResponseInterface;
  * Redacts content from log messages.
  *
  * The following is replaced with [REDACTED]:
- *     - HTTP request headers: authorization, cookie, proxy-authorization.
- *     - HTTP response headers: set-cookie.
- *     - HTTP request body XML fields with customer PII: postal code, zip code.
+ *   - HTTP request headers: authorization, cookie, proxy-authorization.
+ *   - HTTP response headers: set-cookie.
+ *   - HTTP request body XML fields with customer PII: postal code, zip code.
  *
  * @internal
  */

@@ -53,7 +53,8 @@ final readonly class DevProgram
         ?string $contractId,
         private bool $sandbox,
         private ?LoggerInterface $logger = null,
-        /** @internal Optional Guzzle handler for tests. */
+        ?float $timeout = null,
+        /** Internal: Optional Guzzle handler for tests. */
         ?callable $handler = null,
     ) {
         // Validate username.
@@ -88,7 +89,10 @@ final readonly class DevProgram
             $this->sandbox ? self::BASE_URL_DEVELOPMENT : self::BASE_URL_PRODUCTION,
             $this->username,
             $this->password,
-            guzzleOptions: ['handler' => $handler],
+            guzzleOptions: [
+                'handler' => $handler,
+            ],
+            timeout: $timeout,
             logger: $logger,
         );
     }
@@ -112,7 +116,14 @@ final readonly class DevProgram
     /**
      * Configuration array for ClientBase class.
      *
-     * @return array{username: string, password: string, customer_number: string, contract_id: ?string, env: string, logger: ?LoggerInterface}
+     * @return array{
+     *     username: string,
+     *     password: string,
+     *     customer_number: string,
+     *     contract_id: string|null,
+     *     env: string,
+     *     logger: LoggerInterface|null,
+     * }
      */
     private function getConfig(): array
     {

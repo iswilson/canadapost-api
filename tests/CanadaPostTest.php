@@ -37,4 +37,19 @@ final class CanadaPostTest extends TestCase
         $body->loadXML((string) $request->getBody());
         self::assertSame(0, $body->getElementsByTagName('contract-id')->length);
     }
+
+    public function testTimeoutIsOverridden(): void
+    {
+        $history = [];
+        $handlerStack = $this->handlerStack($history, [
+            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+        ]);
+
+        CanadaPost::devProgram('username', 'password', '123456789', timeout: 5, handler: $handlerStack)
+            ->rating()
+            ->getRates('K1A0B1', new Destination('CA', 'H0H0H0'), new Parcel(500));
+
+        $options = $history[0]['options'];
+        self::assertSame(5.0, $options['timeout']);
+    }
 }

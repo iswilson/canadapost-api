@@ -15,5 +15,8 @@ return (new Config())
             'imports_order' => ['class', 'function', 'const'],
         ],
         'phpdoc_separation' => true,
+        'phpdoc_types_order' => [
+            'null_adjustment' => 'always_last',
+        ],
     ])
     ->setFinder(Finder::create()->in(__DIR__)->exclude('vendor'));
