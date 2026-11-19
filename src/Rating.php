@@ -288,7 +288,7 @@ class Rating
                 );
                 throw new InvalidArgumentException($message);
             }
-            $services[] = $serviceCode;
+            $services[] = strtoupper($serviceCode);
         }
 
         return $services;

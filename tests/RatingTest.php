@@ -99,6 +99,28 @@ class RatingTest extends TestCase
         }
     }
 
+    public function testServiceCodesAreCapitalized(): void
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+        ]);
+
+        $this->rating($handlerStack)->getRates(
+            'K1A0B1',
+            new Destination('CA', 'H0H0H0'),
+            new Parcel(500),
+            options: [
+                'service_codes' => ['dom.xp'],
+            ],
+        );
+        $request = $historyContainer[0]['request'];
+
+        $body = new \DOMDocument();
+        $body->loadXML((string) $request->getBody());
+        self::assertSame('DOM.XP', $body->getElementsByTagName('service-code')->item(0)?->textContent);
+    }
+
     public function testOptionCodesAreCapitalized(): void
     {
         $historyContainer = [];
