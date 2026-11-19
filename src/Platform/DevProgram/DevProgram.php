@@ -74,14 +74,14 @@ final readonly class DevProgram
             throw new InvalidArgumentException('Customer number is a required field.');
         }
         if (preg_match('/^[0-9]{1,10}$/', $this->customerNumber) !== 1) {
-            throw new InvalidArgumentException(sprintf('Customer number is invalid, got: %s.', $customerNumber));
+            throw new InvalidArgumentException('Customer number is invalid, expected 1 to 10 digits.');
         }
 
         // Clear contract ID if empty.
         $this->contractId = ($contractId === null || trim($contractId) === '') ? null : trim($contractId);
         // Validate contract ID.
         if ($this->contractId !== null && preg_match('/^[0-9]{1,10}$/', $this->contractId) !== 1) {
-            throw new InvalidArgumentException(sprintf('Contract ID is invalid, got: %s.', $contractId));
+            throw new InvalidArgumentException('Contract ID is invalid, expected 1 to 10 digits.');
         }
 
         $this->transport = new Transport(

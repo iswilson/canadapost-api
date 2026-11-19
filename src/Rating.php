@@ -283,8 +283,7 @@ class Rating
         foreach ($options['service_codes'] as $serviceCode) {
             if (!array_key_exists(strtoupper($serviceCode), self::getServiceCodes())) {
                 $message = sprintf(
-                    'Unsupported service code: "%s". Supported services are %s',
-                    $serviceCode,
+                    'Unsupported service code. Supported services are: %s',
                     implode(', ', array_keys(self::getServiceCodes())),
                 );
                 throw new InvalidArgumentException($message);
@@ -330,7 +329,7 @@ class Rating
         // Value must be a dollar amount (with or without a decimal).
         $value = trim($value);
         if (preg_match('/^[0-9]+(\.[0-9]{1,2})?$/', $value) !== 1) {
-            throw new CanadaPostException(sprintf('Canada Post API returned an invalid dollar amount, got: %s.', $value));
+            throw new CanadaPostException('Canada Post API returned an invalid dollar amount.');
         }
 
         // Split into dollars and cents.
@@ -378,8 +377,7 @@ class Rating
         foreach ($options['option_codes'] as $optionCode) {
             if (!array_key_exists(strtoupper($optionCode), self::getOptionCodes())) {
                 $message = sprintf(
-                    'Unsupported option code: "%s". Supported options are %s',
-                    $optionCode,
+                    'Unsupported option code. Supported options are: %s',
                     implode(', ', array_keys(self::getOptionCodes())),
                 );
                 throw new InvalidArgumentException($message);

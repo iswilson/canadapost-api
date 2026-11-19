@@ -52,7 +52,7 @@ final readonly class Destination
 
         // Must be 2 uppercase characters.
         if (preg_match('/^[A-Z]{2}$/', $code) !== 1) {
-            throw new InvalidArgumentException(sprintf('Invalid country code: %s.', $countryCode));
+            throw new InvalidArgumentException('Invalid country code, use ISO 3166-1 alpha-2 format (e.g. CA).');
         }
 
         return $code;
@@ -70,7 +70,7 @@ final readonly class Destination
 
         // Must be 3 sets of alternating letter + digit (e.g. H0H0H0).
         if (preg_match('/^[A-Z][0-9][A-Z][0-9][A-Z][0-9]$/', $code) !== 1) {
-            throw new InvalidArgumentException(sprintf('Invalid postal code: %s.', $postalCode));
+            throw new InvalidArgumentException('Invalid postal code, expected format A1A1A1.');
         }
 
         return $code;
@@ -93,7 +93,7 @@ final readonly class Destination
 
         // Must be either 5 digits or 5-4 (extended zip code).
         if (preg_match('/^[0-9]{5}(-[0-9]{4})?$/', $code) !== 1) {
-            throw new InvalidArgumentException(sprintf('Invalid zip code: %s.', $zipCode));
+            throw new InvalidArgumentException('Invalid zip code, expected format 12345 or 12345-6789.');
         }
 
         return $code;
