@@ -49,9 +49,9 @@ class LoggingTest extends TestCase
             'password',
             '123456789',
             logger: $spyLogger,
+            handler: $handlerStack,
         )->tracking()->getSummary(
             '1234567890123456',
-            options: ['handler' => $handlerStack],
         );
 
         self::assertCount(1, $spyLogger->records);
@@ -67,7 +67,6 @@ class LoggingTest extends TestCase
         $mock->append(new Response(200, [], file_get_contents(__DIR__ . '/Mocks/tracking-summary-success.xml')));
         $platform->tracking()->getSummary(
             '1234567890123456',
-            options: ['handler' => $handlerStack],
         );
 
         $mock->append(new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')));

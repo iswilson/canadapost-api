@@ -124,6 +124,112 @@ class XmlResponseTest extends TestCase
         }
     }
 
+    public function testExtractedTextIsTrimmed(): void
+    {
+        $doc = XmlResponse::load(<<<'EOF'
+            <tracking-summary>
+                <pin-summary>
+                    <origin-postal-id>  ON   </origin-postal-id>
+                </pin-summary>
+            </tracking-summary>
+        EOF);
+
+        $text = XmlResponse::extractText(
+            $doc->getElementsByTagName('pin-summary')->item(0),
+            'origin-postal-id',
+        );
+        self::assertSame('ON', $text);
+    }
+
+    public function testEmptyElement(): void
+    {
+        $doc = XmlResponse::load(<<<'EOF'
+            <tracking-summary>
+                <pin-summary>
+                    <origin-postal-id></origin-postal-id>
+                </pin-summary>
+            </tracking-summary>
+        EOF);
+
+        $text = XmlResponse::extractText(
+            $doc->getElementsByTagName('pin-summary')->item(0),
+            'origin-postal-id',
+        );
+        self::assertNull($text);
+    }
+
+    public function testMissingElement(): void
+    {
+        $doc = XmlResponse::load(<<<'EOF'
+            <tracking-summary>
+                <pin-summary>
+                    <origin-postal-id></origin-postal-id>
+                </pin-summary>
+            </tracking-summary>
+        EOF);
+
+        $text = XmlResponse::extractText(
+            $doc->getElementsByTagName('pin-summary')->item(0),
+            'destination-postal-id',
+        );
+        self::assertNull($text);
+    }
+
+    public function testMalformedDate(): void
+    {
+        $doc = XmlResponse::load(<<<'EOF'
+            <tracking-summary>
+                <pin-summary>
+                    <mailed-on-date>not a date</mailed-on-date>
+                </pin-summary>
+            </tracking-summary>
+        EOF);
+        self::assertInstanceOf(\DOMDocument::class, $doc);
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('malformed date');
+        XmlResponse::extractDateTime(
+            $doc->getElementsByTagName('pin-summary')->item(0),
+            'mailed-on-date',
+        );
+    }
+
+    public function testInvalidDate(): void
+    {
+        $doc = XmlResponse::load(<<<'EOF'
+            <tracking-summary>
+                <pin-summary>
+                    <mailed-on-date>2026-02-30</mailed-on-date>
+                </pin-summary>
+            </tracking-summary>
+        EOF);
+        self::assertInstanceOf(\DOMDocument::class, $doc);
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('invalid date');
+        XmlResponse::extractDateTime(
+            $doc->getElementsByTagName('pin-summary')->item(0),
+            'mailed-on-date',
+        );
+    }
+
+    public function testInvalidDateTime(): void
+    {
+        $doc = XmlResponse::load(<<<'EOF'
+            <tracking-summary>
+                <pin-summary>
+                    <event-date-time>2026-02-01:999999</event-date-time>
+                </pin-summary>
+            </tracking-summary>
+        EOF);
+        self::assertInstanceOf(\DOMDocument::class, $doc);
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('invalid date');
+        XmlResponse::extractDateTime(
+            $doc->getElementsByTagName('pin-summary')->item(0),
+            'event-date-time',
+            '!Y-m-d:His',
+        );
+    }
+
     private function xmlResponseToDOMDocument(string $xml, int $statusCode = 200, string $expectedRoot = 'test'): \DOMDocument
     {
         return XmlResponse::toDOMDocument(new Response($statusCode, [], $xml), $expectedRoot);

@@ -14,7 +14,10 @@ use Psr\Http\Message\ResponseInterface;
  * The following is replaced with [REDACTED]:
  *   - HTTP request headers: authorization, cookie, proxy-authorization.
  *   - HTTP response headers: set-cookie.
- *   - HTTP request body XML fields with customer PII: postal code, zip code.
+ *   - HTTP request/response body XML fields with customer PII:
+ *       - Rating: postal code, zip code.
+ *       - Tracking: destination postal ID, customer reference fields, signatory
+ *         name.
  *
  * @internal
  */
@@ -31,6 +34,17 @@ final readonly class RedactingMessageFormatter implements MessageFormatterInterf
         'Set-Cookie',
     ];
 
+    private const array REDACTED_ELEMENTS = [
+        // Rating.
+        'postal-code',
+        'zip-code',
+        // Tracking.
+        'destination-postal-id',
+        'customer-ref-1',
+        'customer-ref-2',
+        'signatory-name',
+    ];
+
     public function __construct(private MessageFormatterInterface $inner) {}
 
     public function format(RequestInterface $request, ?ResponseInterface $response = null, ?\Throwable $error = null): string
@@ -45,9 +59,10 @@ final readonly class RedactingMessageFormatter implements MessageFormatterInterf
             }
         }
 
-        // Redact destination postal/zip codes.
+        // Redact sensitive XML elements.
+        $elements = implode('|', self::REDACTED_ELEMENTS);
         return (string) preg_replace(
-            '#<(postal-code|zip-code)>[^<]*</\1>#',
+            "#<({$elements})>[^<]*</\\1>#",
             '<$1>' . self::REDACTED_MESSAGE . '</$1>',
             $this->inner->format($request, $response, $error),
         );

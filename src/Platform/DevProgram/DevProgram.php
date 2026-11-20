@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Platform\DevProgram;
 
-use iswilson\CanadaPost\ClientBase;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating;
-use iswilson\CanadaPost\Tracking;
+use iswilson\CanadaPost\Tracking\TrackingClientInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -17,12 +16,6 @@ final readonly class DevProgram
 {
     public const string BASE_URL_DEVELOPMENT = 'https://ct.soa-gw.canadapost.ca';
     public const string BASE_URL_PRODUCTION = 'https://soa-gw.canadapost.ca';
-
-    /** Developer Program API user ID. */
-    private string $username;
-
-    /** Developer Program API password. */
-    private string $password;
 
     /** Customer number of the owner of the mail (mailed on behalf of customer). */
     private string $customerNumber;
@@ -38,7 +31,9 @@ final readonly class DevProgram
      * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
     public function __construct(
+        /** Developer Program API user ID. */
         string $username,
+        /** Developer Program API password. */
         #[\SensitiveParameter]
         string $password,
         string $customerNumber,
@@ -50,14 +45,14 @@ final readonly class DevProgram
         ?callable $handler = null,
     ) {
         // Validate username.
-        $this->username = trim($username);
-        if ($this->username === '') {
+        $username = trim($username);
+        if ($username === '') {
             throw new InvalidArgumentException('Username is a required field.');
         }
 
         // Validate password.
-        $this->password = trim($password);
-        if ($this->password === '') {
+        $password = trim($password);
+        if ($password === '') {
             throw new InvalidArgumentException('Password is a required field.');
         }
 
@@ -79,8 +74,8 @@ final readonly class DevProgram
 
         $this->transport = new Transport(
             $this->sandbox ? self::BASE_URL_DEVELOPMENT : self::BASE_URL_PRODUCTION,
-            $this->username,
-            $this->password,
+            $username,
+            $password,
             guzzleOptions: [
                 'handler' => $handler,
             ],
@@ -100,32 +95,8 @@ final readonly class DevProgram
     /**
      * Tracking endpoint.
      */
-    public function tracking(): Tracking
+    public function tracking(): TrackingClientInterface
     {
-        return new Tracking($this->getConfig());
-    }
-
-    /**
-     * Configuration array for ClientBase class.
-     *
-     * @return array{
-     *     username: string,
-     *     password: string,
-     *     customer_number: string,
-     *     contract_id: string|null,
-     *     env: string,
-     *     logger: LoggerInterface|null,
-     * }
-     */
-    private function getConfig(): array
-    {
-        return [
-            'username' => $this->username,
-            'password' => $this->password,
-            'customer_number' => $this->customerNumber,
-            'contract_id' => $this->contractId,
-            'env' => $this->sandbox ? ClientBase::ENV_DEVELOPMENT : ClientBase::ENV_PRODUCTION,
-            'logger' => $this->logger,
-        ];
+        return new TrackingClient($this->transport);
     }
 }

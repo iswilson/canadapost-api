@@ -100,4 +100,41 @@ final class XmlResponse
 
         return $messages;
     }
+
+    /**
+     * @return string|null
+     *   Returns null if element is empty or missing.
+     */
+    public static function extractText(\DOMElement $element, string $qualifiedName): ?string
+    {
+        $text = trim($element->getElementsByTagName($qualifiedName)->item(0)->textContent ?? '');
+        return $text === '' ? null : $text;
+    }
+
+    /**
+     * @return \DateTimeImmutable|null
+     *   Returns null if element is empty or missing.
+     *
+     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     *   On invalid or malformed date.
+     */
+    public static function extractDateTime(\DOMElement $element, string $qualifiedName, string $format = '!Y-m-d'): ?\DateTimeImmutable
+    {
+        $text = self::extractText($element, $qualifiedName);
+        if ($text === null) {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromFormat($format, $text, new \DateTimeZone('UTC'));
+        if ($date === false) {
+            throw new CanadaPostException('Canada Post API returned a malformed date.');
+        }
+
+        // Formatted date (minus ! field reset char) should match text.
+        if ($date->format(ltrim($format, '!')) !== $text) {
+            throw new CanadaPostException('Canada Post API returned an invalid date.');
+        }
+
+        return $date;
+    }
 }

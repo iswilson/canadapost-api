@@ -3,10 +3,19 @@
 ## [Unreleased]
 
 ### Added
-- New helper class `Platform\DevProgram\XMLResponse` added to assist platform clients with parsing response data into `DOMDocument`.
+- New interface (intended for testing and internal use) `Tracking\TrackingClientInterface` for implementing tracking service clients.
+- New class `Platform\DevProgram\TrackingClient` implementing `Tracking\TrackingClientInterface` interface.
+- New value class `Tracking\PinSummary` holds tracking summary fields.
+- The following tracking summary response fields are redacted from the logs: destination postal ID, customer reference fields, signatory name.
 
 ### Changed
+- **BREAKING:** `Platform\DevProgram\DevProgram::tracking()` now returns `Tracking\TrackingClientInterface`.
+- **BREAKING:** `getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
+
+### Removed
 - **BREAKING:** Removed deprecated classes `NCShipment`, `PostOffice`, `Returns`, `Shipment`.
+- **BREAKING:** Removed original `Tracking` class.
+- **BREAKING:** Removed `getDetails()`, `getSignatureImage()`, `getDeliveryConfirmationCertificate()` methods.
 
 ## [0.5.0] - 2026-11-19
 

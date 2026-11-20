@@ -75,8 +75,8 @@ class RedactingMessageFormatterTest extends TestCase
         yield 'Set-Cookie' => ['Set-Cookie'];
     }
 
-    #[DataProvider('getSensitiveFields')]
-    public function testRequestFieldsAreRedactedFromLog(string $fieldName, Destination $destination): void
+    #[DataProvider('getSensitiveRatingFields')]
+    public function testRatingRequestFieldsAreRedactedFromLog(string $fieldName, Destination $destination): void
     {
         $spyLogger = new SpyLogger();
         $this->getSentRatingRequest($spyLogger, $destination);
@@ -87,12 +87,32 @@ class RedactingMessageFormatterTest extends TestCase
     /**
      * @return iterable<string, array{string, Destination}>
      */
-    public static function getSensitiveFields(): iterable
+    public static function getSensitiveRatingFields(): iterable
     {
         yield 'Postal code' => ['postal-code', new Destination('CA', 'H0H0H0')];
         yield 'Zip code 5' => ['zip-code', new Destination('US', '98765')];
         yield 'Zip code 5-4' => ['zip-code', new Destination('US', '98765-4321')];
         yield 'International postal code' => ['postal-code', new Destination('AQ', 'A1B2-C3D4')];
+    }
+
+    #[DataProvider('getSensitiveTrackingFields')]
+    public function testTrackingResponseFieldsAreRedactedFromLog(string $fieldName, string $fieldValue): void
+    {
+        $spyLogger = new SpyLogger();
+        $this->getSentTrackingRequest($spyLogger);
+        self::assertStringContainsString(sprintf('<%s>[REDACTED]</%s>', $fieldName, $fieldName), $spyLogger->records[0]['message']);
+        self::assertStringNotContainsString($fieldValue, $spyLogger->records[0]['message']);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function getSensitiveTrackingFields(): iterable
+    {
+        yield 'Destination postal ID' => ['destination-postal-id', 'K1A'];
+        yield 'Customer reference #1' => ['customer-ref-1', 'testing123'];
+        yield 'Customer reference #2' => ['customer-ref-2', 'testing456'];
+        yield 'Signatory name' => ['signatory-name', 'testing789'];
     }
 
     public function testOtherRequestFieldsAreNotRedacted(): void
@@ -118,6 +138,23 @@ class RedactingMessageFormatterTest extends TestCase
         CanadaPost::devProgram('username', 'password', '12345789', '135792468', logger: $logger, handler: $handlerStack)
             ->rating()
             ->getRates('K1A0B1', $destination ?? new Destination('CA', 'H0H0H0'), new Parcel(500));
+
+        return $historyContainer[0]['request'];
+    }
+
+    /**
+     * @return \Psr\Http\Message\RequestInterface
+     */
+    private function getSentTrackingRequest(LoggerInterface $logger): RequestInterface
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../Mocks/tracking-summary-success.xml')),
+        ]);
+
+        CanadaPost::devProgram('username', 'password', '12345789', '135792468', logger: $logger, handler: $handlerStack)
+            ->tracking()
+            ->getSummary('ABCDEF1234567890');
 
         return $historyContainer[0]['request'];
     }
