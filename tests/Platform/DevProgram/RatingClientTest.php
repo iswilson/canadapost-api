@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace iswilson\CanadaPost\Tests;
+namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Platform\DevProgram\RatingClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
-use iswilson\CanadaPost\Rating;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
@@ -24,10 +24,10 @@ use PHPUnit\Framework\TestCase;
 /**
  * Rating Class Tests.
  */
-#[CoversClass(Rating::class)]
-#[CoversMethod(Rating::class, 'getRates')]
+#[CoversClass(RatingClient::class)]
+#[CoversMethod(RatingClient::class, 'getRates')]
 #[Group('Rating')]
-class RatingTest extends TestCase
+class RatingClientTest extends TestCase
 {
     use HttpMockHandlerTrait;
 
@@ -35,16 +35,14 @@ class RatingTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates(
             'K1A0B1',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            options: [
-                'service_codes' => ['dom.xp'],
-            ],
+            serviceCodes: ['dom.xp'],
         );
         $request = $historyContainer[0]['request'];
 
@@ -57,16 +55,14 @@ class RatingTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates(
             'H0H0H0',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            options: [
-                'option_codes' => ['so'],
-            ],
+            optionCodes: ['so'],
         );
         $request = $historyContainer[0]['request'];
 
@@ -80,7 +76,7 @@ class RatingTest extends TestCase
      */
     public function testValidRatingResponse(): void
     {
-        $response = $this->getRatingResponse(file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml'));
+        $response = $this->getRatingResponse(file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml'));
         self::assertEquals([
             new PriceQuote('DOM.EP', 'Expedited Parcel', 1021),
             new PriceQuote('DOM.PC', 'Priority Courier', 2520),
@@ -98,7 +94,7 @@ class RatingTest extends TestCase
     public function testResponseWithErrorMessages(): void
     {
         try {
-            $this->getRatingResponse(file_get_contents(__DIR__ . '/Mocks/rating-response-error.xml'));
+            $this->getRatingResponse(file_get_contents(__DIR__ . '/../../Mocks/rating-response-error.xml'));
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertCount(2, $e->errors);
@@ -320,7 +316,7 @@ class RatingTest extends TestCase
     #[DataProvider('getValidFormatDecimalInputs')]
     public function testFormatDecimal(int $value, int $decimalPlaces, string $expectedValue): void
     {
-        self::assertSame($expectedValue, Rating::formatDecimal($value, $decimalPlaces));
+        self::assertSame($expectedValue, RatingClient::formatDecimal($value, $decimalPlaces));
     }
 
     /**
@@ -339,7 +335,7 @@ class RatingTest extends TestCase
     public function testInvalidFormatDecimal(int $value, int $decimalPlaces): void
     {
         $this->expectException(InvalidArgumentException::class);
-        Rating::formatDecimal($value, $decimalPlaces);
+        RatingClient::formatDecimal($value, $decimalPlaces);
     }
 
     /**
@@ -380,7 +376,7 @@ class RatingTest extends TestCase
     #[DataProvider('getValidFormatDollarToCentsAmounts')]
     public function testValidFormatDollarToCentsAmounts(string $value, int $expectedValue): void
     {
-        self::assertSame($expectedValue, Rating::convertDollarsToCents($value));
+        self::assertSame($expectedValue, RatingClient::convertDollarsToCents($value));
     }
 
     /**
@@ -401,7 +397,7 @@ class RatingTest extends TestCase
     public function testInvalidFormatDollarToCentsAmounts(string $value): void
     {
         $this->expectException(CanadaPostException::class);
-        Rating::convertDollarsToCents($value);
+        RatingClient::convertDollarsToCents($value);
     }
 
     /**
@@ -416,9 +412,9 @@ class RatingTest extends TestCase
         yield 'Letters' => ['A1.23'];
     }
 
-    private function rating(callable $handler): Rating
+    private function rating(callable $handler): RatingClient
     {
-        return new Rating(
+        return new RatingClient(
             new Transport('https://localhost', 'username', 'password', ['handler' => $handler]),
             '123456789',
         );
@@ -450,7 +446,7 @@ class RatingTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);

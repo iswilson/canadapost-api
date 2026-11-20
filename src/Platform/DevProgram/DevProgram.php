@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace iswilson\CanadaPost\Platform\DevProgram;
 
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
-use iswilson\CanadaPost\Rating;
+use iswilson\CanadaPost\Rating\RatingClientInterface;
 use iswilson\CanadaPost\Tracking\TrackingClientInterface;
 use Psr\Log\LoggerInterface;
 
@@ -87,9 +87,9 @@ final readonly class DevProgram
     /**
      * Rating endpoint.
      */
-    public function rating(): Rating
+    public function rating(): RatingClientInterface
     {
-        return new Rating($this->transport, $this->customerNumber, $this->contractId);
+        return new RatingClient($this->transport, $this->customerNumber, $this->contractId);
     }
 
     /**

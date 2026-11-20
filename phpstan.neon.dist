@@ -9,5 +9,4 @@ parameters:
         analyse:
             - src/ClientBase.php
             - src/ServiceInfo.php
-            - src/Tracking.php
             - tests/Mocks

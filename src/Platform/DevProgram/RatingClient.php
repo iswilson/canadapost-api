@@ -2,56 +2,33 @@
 
 declare(strict_types=1);
 
-namespace iswilson\CanadaPost;
+namespace iswilson\CanadaPost\Platform\DevProgram;
 
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
-use iswilson\CanadaPost\Platform\DevProgram\Transport;
-use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
+use iswilson\CanadaPost\Rating\RatingClientInterface;
 use LSS\Array2XML;
 
 /**
  * Rating contains Canada Post API calls for package rates.
- *
- * @package CanadaPost
- *
- * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/default.jsf
  */
-class Rating
+final readonly class RatingClient implements RatingClientInterface
 {
     public function __construct(
-        protected readonly Transport $transport,
-        protected readonly string $customerNumber,
-        protected readonly ?string $contractId = null,
+        private Transport $transport,
+        private string $customerNumber,
+        private ?string $contractId = null,
     ) {}
 
-    /**
-     * Get the shipping rates for the given locations and weight.
-     *
-     * @param string $originPostalCode
-     *   The origin postal code.
-     * @param Destination $destination
-     *   The destination postal code.
-     * @param Parcel $parcel
-     *   Parcel characteristics (weight, length, width, height).
-     * @param array<string, mixed> $options
-     *   The array of options. Rating specific options:
-     *     - service_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
-     *     - options_codes: https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
-     *
-     * @return list<PriceQuote>
-     *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
-     */
     public function getRates(
         string $originPostalCode,
         Destination $destination,
         Parcel $parcel,
-        array $options = [],
+        array $optionCodes = [],
+        array $serviceCodes = [],
     ): array {
         $content = [
             'customer-number' => $this->customerNumber,
@@ -84,16 +61,11 @@ class Rating
             ];
         }
 
-        // TODO split the options for Canada Post from the options for Guzzle.
-        // They can either be separate variables or the Canada Post options can
-        // be within a sub-array keyed by canada_post (or the other way around).
-        $serviceCodes = $options['service_codes'] ?? [];
         if ($serviceCodes !== []) {
-            $content['services']['service-code'] = $this->parseServiceCodes($options);
+            $content['services']['service-code'] = $this->parseServiceCodes($serviceCodes);
         }
-        $optionCodes = $options['option_codes'] ?? [];
         if ($optionCodes !== []) {
-            $content['options']['option'] = $this->parseOptionCodes($options);
+            $content['options']['option'] = $this->parseOptionCodes($optionCodes);
         }
 
         if ($this->contractId !== null) {
@@ -202,16 +174,16 @@ class Rating
     /**
      * Helper function to extract the service codes.
      *
-     * @param array<string, mixed> $options
-     *   The options array.
+     * @param list<string> $serviceCodes
+     *   List of service codes.
      *
      * @return list<string>
      *   The list of services to look up.
      */
-    protected function parseServiceCodes(array $options): array
+    protected function parseServiceCodes(array $serviceCodes): array
     {
         $services = [];
-        foreach ($options['service_codes'] as $serviceCode) {
+        foreach ($serviceCodes as $serviceCode) {
             if (!array_key_exists(strtoupper($serviceCode), self::getServiceCodes())) {
                 $message = sprintf(
                     'Unsupported service code. Supported services are: %s',
@@ -294,18 +266,18 @@ class Rating
     /**
      * Helper function to extract the option codes.
      *
-     * @param array{option_codes: list<string>} $options
-     *   The options array.
+     * @param list<string> $optionCodes
+     *   List of option codes.
      *
      * @return list<array{option-code: string}>
      *   The list of options with the option-code.
      *
      * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
-    protected function parseOptionCodes(array $options): array
+    protected function parseOptionCodes(array $optionCodes): array
     {
         $valid_options = [];
-        foreach ($options['option_codes'] as $optionCode) {
+        foreach ($optionCodes as $optionCode) {
             if (!array_key_exists(strtoupper($optionCode), self::getOptionCodes())) {
                 $message = sprintf(
                     'Unsupported option code. Supported options are: %s',

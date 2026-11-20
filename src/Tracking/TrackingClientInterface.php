@@ -7,10 +7,10 @@ namespace iswilson\CanadaPost\Tracking;
 /**
  * Tracking services for a Canada Post platform.
  *
- * @see https://www.canadapost-postescanada.ca/info/mc/business/productsservices/developers/services/tracking/default.jsf
- *
  * This interface is not intended to be implemented outside of this library. New
  * methods may be added as more endpoints are supported.
+ *
+ * @see https://www.canadapost-postescanada.ca/info/mc/business/productsservices/developers/services/tracking/default.jsf
  */
 interface TrackingClientInterface
 {

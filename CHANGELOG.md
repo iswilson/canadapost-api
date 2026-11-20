@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Added
-- New interface (intended for testing and internal use) `Tracking\TrackingClientInterface` for implementing tracking service clients.
+- New interfaces (intended for testing and internal use) `Tracking\TrackingClientInterface` and `Rating\RatingClientInterface` for implementing service clients.
 - New class `Platform\DevProgram\TrackingClient` implementing `Tracking\TrackingClientInterface` interface.
 - New value class `Tracking\PinSummary` holds tracking summary fields.
 - The following tracking summary response fields are redacted from the logs: destination postal ID, customer reference fields, signatory name.
@@ -11,6 +11,9 @@
 ### Changed
 - **BREAKING:** `Platform\DevProgram\DevProgram::tracking()` now returns `Tracking\TrackingClientInterface`.
 - **BREAKING:** `getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
+- **BREAKING:** `Platform\DevProgram\DevProgram::rating()` now returns `Rating\RatingClientInterface`.
+- **BREAKING:** Moved `Rating` to `Platform\DevProgram\RatingClient` implementing `Rating\RatingClientInterface`.
+- **BREAKING:** `getRates()` uses separate parameters for option/service codes instead of a combined array. The options parameter is removed.
 
 ### Removed
 - **BREAKING:** Removed deprecated classes `NCShipment`, `PostOffice`, `Returns`, `Shipment`.
