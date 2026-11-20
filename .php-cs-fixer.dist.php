@@ -18,5 +18,10 @@ return (new Config())
         'phpdoc_types_order' => [
             'null_adjustment' => 'always_last',
         ],
+        'phpdoc_line_span' => [
+            'const' => 'single',
+            'property' => 'single',
+            'method' => 'multi',
+        ],
     ])
     ->setFinder(Finder::create()->in(__DIR__)->exclude('vendor'));

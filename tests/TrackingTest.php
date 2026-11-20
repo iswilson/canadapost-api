@@ -22,9 +22,7 @@ use PHPUnit\Framework\TestCase;
 #[Group('Tracking')]
 class TrackingTest extends TestCase
 {
-    /**
-     * The Tracking service.
-     */
+    /** The Tracking service. */
     protected Tracking $trackingService;
 
     /**

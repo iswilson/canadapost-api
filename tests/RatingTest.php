@@ -287,7 +287,9 @@ class RatingTest extends TestCase
         self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
     }
 
-    /** @return iterable<string, array{Destination, string}> */
+    /**
+     * @return iterable<string, array{Destination, string}>
+     */
     public static function getDestinations(): iterable
     {
         yield 'Canada' => [
@@ -321,7 +323,9 @@ class RatingTest extends TestCase
         self::assertSame($expectedValue, Rating::formatDecimal($value, $decimalPlaces));
     }
 
-    /** @return iterable<string, array{int, int, string}> */
+    /**
+     * @return iterable<string, array{int, int, string}>
+     */
     public static function getValidFormatDecimalInputs(): iterable
     {
         yield 'Zero' => [0, 3, '0.000'];
@@ -338,7 +342,9 @@ class RatingTest extends TestCase
         Rating::formatDecimal($value, $decimalPlaces);
     }
 
-    /** @return iterable<string, array{int, int}> */
+    /**
+     * @return iterable<string, array{int, int}>
+     */
     public static function getInvalidFormatDecimalInputs(): iterable
     {
         yield 'Negative value' => [-1, 3];
@@ -354,7 +360,9 @@ class RatingTest extends TestCase
         self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
     }
 
-    /** @return iterable<string, array{int, ?int, ?int, ?int, string}> */
+    /**
+     * @return iterable<string, array{int, ?int, ?int, ?int, string}>
+     */
     public static function getParcelCharacteristics(): iterable
     {
         yield 'Weight only' => [
@@ -375,7 +383,9 @@ class RatingTest extends TestCase
         self::assertSame($expectedValue, Rating::convertDollarsToCents($value));
     }
 
-    /** @return iterable<string, array{string, int}> */
+    /**
+     * @return iterable<string, array{string, int}>
+     */
     public static function getValidFormatDollarToCentsAmounts(): iterable
     {
         yield 'Two decimals' => ['12.34', 1234];
@@ -394,7 +404,9 @@ class RatingTest extends TestCase
         Rating::convertDollarsToCents($value);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function getInvalidFormatDollarToCentsAmounts(): iterable
     {
         yield 'Empty' => [''];

@@ -40,7 +40,9 @@ class RedactingMessageFormatterTest extends TestCase
         self::assertStringNotContainsString('testing123', $message);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function getSensitiveHttpRequestHeaders(): iterable
     {
         yield 'Authorization' => ['Authorization'];
@@ -65,7 +67,9 @@ class RedactingMessageFormatterTest extends TestCase
         self::assertStringNotContainsString('testing123', $message);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function getSensitiveHttpResponseHeaders(): iterable
     {
         yield 'Set-Cookie' => ['Set-Cookie'];
@@ -80,7 +84,9 @@ class RedactingMessageFormatterTest extends TestCase
         self::assertStringNotContainsString($destination->postalCode, $spyLogger->records[0]['message']);
     }
 
-    /** @return iterable<string, array{string, Destination}> */
+    /**
+     * @return iterable<string, array{string, Destination}>
+     */
     public static function getSensitiveFields(): iterable
     {
         yield 'Postal code' => ['postal-code', new Destination('CA', 'H0H0H0')];

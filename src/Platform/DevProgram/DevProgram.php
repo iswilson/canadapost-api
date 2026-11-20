@@ -18,24 +18,16 @@ final readonly class DevProgram
     public const string BASE_URL_DEVELOPMENT = 'https://ct.soa-gw.canadapost.ca';
     public const string BASE_URL_PRODUCTION = 'https://soa-gw.canadapost.ca';
 
-    /**
-     * Developer Program API user ID.
-     */
+    /** Developer Program API user ID. */
     private string $username;
 
-    /**
-     * Developer Program API password.
-     */
+    /** Developer Program API password. */
     private string $password;
 
-    /**
-     * Customer number of the owner of the mail (mailed on behalf of customer).
-     */
+    /** Customer number of the owner of the mail (mailed on behalf of customer). */
     private string $customerNumber;
 
-    /**
-     * Optional contract ID for commercial customers.
-     */
+    /** Optional contract ID for commercial customers. */
     private ?string $contractId;
 
     private Transport $transport;

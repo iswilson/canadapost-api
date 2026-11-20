@@ -22,7 +22,9 @@ final class ParcelTest extends TestCase
         self::assertSame($expectedWeightGrams, $parcel->weightGrams);
     }
 
-    /** @return iterable<string, array{int, int}> */
+    /**
+     * @return iterable<string, array{int, int}>
+     */
     public static function getValidParcelWeights(): iterable
     {
         yield 'Maximum' => [99_999, 99_999];
@@ -37,7 +39,9 @@ final class ParcelTest extends TestCase
         new Parcel($weightGrams);
     }
 
-    /** @return iterable<string, array{int}> */
+    /**
+     * @return iterable<string, array{int}>
+     */
     public static function getInvalidParcelWeights(): iterable
     {
         yield 'Over maximum' => [100_000];
@@ -75,7 +79,9 @@ final class ParcelTest extends TestCase
         self::assertSame($expectedHeightMm, $parcel->heightMm);
     }
 
-    /** @return iterable<string, array{int, int, int, int, int, int}> */
+    /**
+     * @return iterable<string, array{int, int, int, int, int, int}>
+     */
     public static function getValidParcelDimensions(): iterable
     {
         yield 'Maximum size' => [999_9, 999_9, 999_9, 999_9, 999_9, 999_9];
@@ -93,7 +99,9 @@ final class ParcelTest extends TestCase
         new Parcel(1, $lengthMm, $widthMm, $heightMm);
     }
 
-    /** @return iterable<string, array{?int, ?int, ?int}> */
+    /**
+     * @return iterable<string, array{?int, ?int, ?int}>
+     */
     public static function getMissingParcelDimensions(): iterable
     {
         yield 'Only length' => [3, null, null];
@@ -114,7 +122,9 @@ final class ParcelTest extends TestCase
         new Parcel(1, $lengthMm, $widthMm, $heightMm);
     }
 
-    /** @return iterable<string, array{int, int, int}> */
+    /**
+     * @return iterable<string, array{int, int, int}>
+     */
     public static function getInvalidParcelDimensions(): iterable
     {
         yield 'Zero length' => [0, 3, 3];
@@ -143,7 +153,9 @@ final class ParcelTest extends TestCase
         self::assertSame($expectedHeightMm, $parcel->heightMm);
     }
 
-    /** @return iterable<string, array{int, int, int, int, int, int}> */
+    /**
+     * @return iterable<string, array{int, int, int, int, int, int}>
+     */
     public static function getUnsortedValidParcelDimensions(): iterable
     {
         yield 'Already sorted' => [3, 2, 1, 3, 2, 1];

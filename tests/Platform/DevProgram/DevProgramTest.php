@@ -51,7 +51,9 @@ final class DevProgramTest extends TestCase
         new DevProgram('username', 'password', $customerNumber, null, true);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function getInvalidCustomerNumbers(): iterable
     {
         yield 'Too long' => ['12345678901'];
@@ -66,7 +68,9 @@ final class DevProgramTest extends TestCase
         new DevProgram('username', 'password', '123456789', $contractId, true);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function getInvalidContractIds(): iterable
     {
         yield 'Too long' => ['12345678901'];
@@ -118,7 +122,9 @@ final class DevProgramTest extends TestCase
         self::assertSame(0, $body->getElementsByTagName('contract-id')->length);
     }
 
-    /** @return iterable<string, array{?string}> */
+    /**
+     * @return iterable<string, array{?string}>
+     */
     public static function getEmptyOrNullContractIds(): iterable
     {
         yield 'Empty' => [''];

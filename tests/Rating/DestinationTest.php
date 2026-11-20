@@ -22,7 +22,9 @@ final class DestinationTest extends TestCase
         self::assertSame($expectedCountryCode, $destination->countryCode);
     }
 
-    /** @return iterable<string, array{string, string}> */
+    /**
+     * @return iterable<string, array{string, string}>
+     */
     public static function getValidCountryCodes(): iterable
     {
         yield 'Already normalized' => ['AQ', 'AQ'];
@@ -37,7 +39,9 @@ final class DestinationTest extends TestCase
         new Destination($countryCode);
     }
 
-    /** @return iterable<string, array{string}> */
+    /**
+     * @return iterable<string, array{string}>
+     */
     public static function getInvalidCountryCodes(): iterable
     {
         yield 'Empty' => [''];
@@ -53,7 +57,9 @@ final class DestinationTest extends TestCase
         self::assertSame($expectedPostalCode, $destination->postalCode);
     }
 
-    /** @return iterable<string, array{string, string}> */
+    /**
+     * @return iterable<string, array{string, string}>
+     */
     public static function getValidCanadianPostalCodes(): iterable
     {
         yield 'Already normalized' => ['H0H0H0', 'H0H0H0'];
@@ -70,7 +76,9 @@ final class DestinationTest extends TestCase
         new Destination('CA', $postalCode);
     }
 
-    /** @return iterable<string, array{?string}> */
+    /**
+     * @return iterable<string, array{?string}>
+     */
     public static function getInvalidCanadianPostalCodes(): iterable
     {
         yield 'Empty' => [''];
@@ -88,7 +96,9 @@ final class DestinationTest extends TestCase
         self::assertSame($expectedZipCode, $destination->postalCode);
     }
 
-    /** @return iterable<string, array{string, string}> */
+    /**
+     * @return iterable<string, array{string, string}>
+     */
     public static function getValidZipCodes(): iterable
     {
         yield '5 digits' => ['12345', '12345'];
@@ -105,7 +115,9 @@ final class DestinationTest extends TestCase
         new Destination('US', $zipCode);
     }
 
-    /** @return iterable<string, array{?string}> */
+    /**
+     * @return iterable<string, array{?string}>
+     */
     public static function getInvalidZipCodes(): iterable
     {
         yield 'Empty' => [''];
@@ -122,7 +134,9 @@ final class DestinationTest extends TestCase
         self::assertSame($expectedPostalCode, $destination->postalCode);
     }
 
-    /** @return iterable<string, array{?string, ?string}> */
+    /**
+     * @return iterable<string, array{?string, ?string}>
+     */
     public static function getValidInternationalPostalCodes(): iterable
     {
         yield 'Empty' => ['', null];

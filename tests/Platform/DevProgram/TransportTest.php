@@ -89,7 +89,9 @@ class TransportTest extends TestCase
         self::assertSame($timeout, $requestOptions['timeout']);
     }
 
-    /** @return iterable<string, array{float}> */
+    /**
+     * @return iterable<string, array{float}>
+     */
     public static function getTimeoutValues(): iterable
     {
         yield 'Zero seconds' => [0];
