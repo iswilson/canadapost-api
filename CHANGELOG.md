@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Added
+- New helper class `Platform\DevProgram\XMLResponse` added to assist platform clients with parsing response data into `DOMDocument`.
+
 ### Changed
 - **BREAKING:** Removed deprecated classes `NCShipment`, `PostOffice`, `Returns`, `Shipment`.
 

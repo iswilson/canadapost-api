@@ -6,7 +6,6 @@ namespace iswilson\CanadaPost\Tests;
 
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
@@ -31,73 +30,6 @@ use PHPUnit\Framework\TestCase;
 class RatingTest extends TestCase
 {
     use HttpMockHandlerTrait;
-
-    private function rating(callable $handler): Rating
-    {
-        return new Rating(
-            new Transport('https://localhost', 'username', 'password', ['handler' => $handler]),
-            '123456789',
-        );
-    }
-
-    public function testInternalServerErrorResponse(): void
-    {
-        try {
-            $this->getRatingResponse('', 500);
-            self::fail('Expected CanadaPostException exception to be thrown.');
-        } catch (CanadaPostException $e) {
-            self::assertSame(500, $e->httpStatusCode);
-        }
-    }
-
-    public function testBadRequestAPIResponse(): void
-    {
-        try {
-            $this->getRatingResponse(self::getErrorMessagesResponse(), 400);
-            self::fail('Expected CanadaPostException exception to be thrown.');
-        } catch (CanadaPostException $e) {
-            self::assertSame(400, $e->httpStatusCode);
-            self::assertCount(2, $e->errors);
-        }
-    }
-
-    public function testBadRequestInvalidXmlResponse(): void
-    {
-        try {
-            $this->getRatingResponse('this is not an XML string', 400);
-            self::fail('Expected CanadaPostException exception to be thrown.');
-        } catch (CanadaPostException $e) {
-            self::assertSame(400, $e->httpStatusCode);
-        }
-    }
-
-    public function testBadRequestNoXmlResponse(): void
-    {
-        try {
-            $this->getRatingResponse('', 400);
-            self::fail('Expected CanadaPostException exception to be thrown.');
-        } catch (CanadaPostException $e) {
-            self::assertSame(400, $e->httpStatusCode);
-        }
-    }
-
-    public function testTryAgainLaterResponse(): void
-    {
-        try {
-            $this->getRatingResponse(<<<'EOF'
-                <messages>
-                    <message>
-                        <code>7010</code>
-                        <description>We are unable to provide you with a price at this time. Please try again later.</description>
-                    </message>
-                </messages>
-            EOF, 202);
-            self::fail('Expected CanadaPostException exception to be thrown.');
-        } catch (CanadaPostException $e) {
-            self::assertSame(202, $e->httpStatusCode);
-            self::assertTrue($e->hasErrorCode('7010'));
-        }
-    }
 
     public function testServiceCodesAreCapitalized(): void
     {
@@ -157,31 +89,16 @@ class RatingTest extends TestCase
         ], $response);
     }
 
-    public function testEmptyRatingResponse(): void
+    public function testEmptyPriceQuotes(): void
     {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('empty response');
-        $this->getRatingResponse('');
+        $response = $this->getRatingResponse('<?xml version="1.0" encoding="UTF-8"?><price-quotes></price-quotes>');
+        self::assertEquals([], $response);
     }
 
-    public function testInvalidRatingResponse(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('invalid XML');
-        $this->getRatingResponse('this is not an XML string');
-    }
-
-    public function testUnknownXmlRootElement(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('returned valid XML but required elements are missing');
-        $this->getRatingResponse('<testing></testing>');
-    }
-
-    public function testResponseWithMultipleErrorMessages(): void
+    public function testResponseWithErrorMessages(): void
     {
         try {
-            $this->getRatingResponse(self::getErrorMessagesResponse());
+            $this->getRatingResponse(file_get_contents(__DIR__ . '/Mocks/rating-response-error.xml'));
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertCount(2, $e->errors);
@@ -189,61 +106,6 @@ class RatingTest extends TestCase
             self::assertTrue($e->hasErrorCode('1722'));
             self::assertStringContainsString('7007, 1722', $e->getMessage());
         }
-    }
-
-    public function testErrorResponseWithNoErrorMessages(): void
-    {
-        try {
-            $this->getRatingResponse('<messages></messages>');
-            self::fail('Expected CanadaPostException exception to be thrown.');
-        } catch (CanadaPostException $e) {
-            self::assertCount(0, $e->errors);
-            self::assertStringContainsString('no error code', $e->getMessage());
-        }
-    }
-
-    /**
-     * Return XML string containing Canada Post API error messages.
-     */
-    private static function getErrorMessagesResponse(): string
-    {
-        return <<<'EOF'
-            <messages>
-                <message>
-                    <code>7007</code>
-                    <description>The weight value is invalid. The weight of each piece must be less than or equal to 30 kg.</description>
-                </message>
-                <message>
-                    <code>1722</code>
-                    <description>The options are invalid for the selected Service. Please change the options or select another service.</description>
-                </message>
-            </messages>
-        EOF;
-    }
-
-    /**
-     * Get rating response from provided XML.
-     *
-     * @return list<PriceQuote>
-     */
-    private function getRatingResponse(string $xml, int $statusCode = 200): array
-    {
-        $mock = new MockHandler([
-            new Response($statusCode, [], $xml),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-
-        return $this->rating($handlerStack)->getRates(
-            'H0H0H0',
-            new Destination('CA', 'H0H0H0'),
-            new Parcel(500),
-        );
-    }
-
-    public function testEmptyPriceQuotes(): void
-    {
-        $response = $this->getRatingResponse('<?xml version="1.0" encoding="UTF-8"?><price-quotes></price-quotes>');
-        self::assertEquals([], $response);
     }
 
     public function testResponseMissingServiceCode(): void
@@ -453,30 +315,6 @@ class RatingTest extends TestCase
         self::assertXmlStringEqualsXmlString('<origin-postal-code>H0H0H0</origin-postal-code>', $sentXml);
     }
 
-    /**
-     * Get the XML request body from a getRates() call.
-     */
-    private function getSentRequestBody(Destination $destination, Parcel $parcel, string $originPostalCode = 'H0H0H0'): \DOMDocument
-    {
-        $mock = new MockHandler([
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-
-        // Add history middleware that will record each request.
-        $historyContainer = [];
-        $history = Middleware::history($historyContainer);
-        $handlerStack->push($history);
-
-        $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);
-
-        // Get request body from history.
-        $requestBody = new \DOMDocument();
-        $requestBody->loadXML((string) $historyContainer[0]['request']->getBody());
-
-        return $requestBody;
-    }
-
     #[DataProvider('getValidFormatDecimalInputs')]
     public function testFormatDecimal(int $value, int $decimalPlaces, string $expectedValue): void
     {
@@ -564,5 +402,51 @@ class RatingTest extends TestCase
         yield 'Too many decimals' => ['1.234'];
         yield 'Negative' => ['-12.34'];
         yield 'Letters' => ['A1.23'];
+    }
+
+    private function rating(callable $handler): Rating
+    {
+        return new Rating(
+            new Transport('https://localhost', 'username', 'password', ['handler' => $handler]),
+            '123456789',
+        );
+    }
+
+    /**
+     * Get rating response from provided XML.
+     *
+     * @return list<PriceQuote>
+     */
+    private function getRatingResponse(string $xml, int $statusCode = 200): array
+    {
+        $mock = new MockHandler([
+            new Response($statusCode, [], $xml),
+        ]);
+        $handlerStack = HandlerStack::create($mock);
+
+        return $this->rating($handlerStack)->getRates(
+            'H0H0H0',
+            new Destination('CA', 'H0H0H0'),
+            new Parcel(500),
+        );
+    }
+
+    /**
+     * Get the XML request body from a getRates() call.
+     */
+    private function getSentRequestBody(Destination $destination, Parcel $parcel, string $originPostalCode = 'H0H0H0'): \DOMDocument
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+        ]);
+
+        $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);
+
+        // Get request body from history.
+        $requestBody = new \DOMDocument();
+        $requestBody->loadXML((string) $historyContainer[0]['request']->getBody());
+
+        return $requestBody;
     }
 }

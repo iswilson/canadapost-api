@@ -7,6 +7,7 @@ namespace iswilson\CanadaPost;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
+use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
@@ -117,57 +118,9 @@ class Rating
             $payload,
         );
 
-        $responseBody = (string) $response->getBody();
-        // Response is empty.
-        if ($responseBody === '') {
-            throw new CanadaPostException(
-                'Canada Post API returned an empty response.',
-                httpStatusCode: $response->getStatusCode(),
-            );
-        }
+        $doc = XmlResponse::toDOMDocument($response, 'price-quotes');
 
-        $doc = self::loadXml($responseBody);
-        // Response is not valid XML.
-        if ($doc === null) {
-            throw new CanadaPostException(
-                'Canada Post API returned invalid XML.',
-                httpStatusCode: $response->getStatusCode(),
-            );
-        }
-
-        switch ($doc->documentElement?->localName) {
-            case 'price-quotes':
-                return self::parsePriceQuotes($doc);
-            case 'messages':
-                $errorMessages = self::parseErrorMessages($doc);
-                $errorCodes = (count($errorMessages) > 0) ? array_column($errorMessages, 'code') : ['no error code'];
-
-                throw new CanadaPostException(
-                    sprintf('Canada Post API request failed (%s).', implode(', ', $errorCodes)),
-                    errors: $errorMessages,
-                    httpStatusCode: $response->getStatusCode(),
-                );
-        }
-
-        // Response is valid XML but doesn't contain any elements we know how
-        // to parse.
-        throw new CanadaPostException(
-            'Canada Post API returned valid XML but required elements are missing.',
-            httpStatusCode: $response->getStatusCode(),
-        );
-    }
-
-    private static function loadXml(string $xml): ?\DOMDocument
-    {
-        $doc = new \DOMDocument();
-
-        // Suppress libxml errors while reading data.
-        $previousSetting = libxml_use_internal_errors(true);
-        $loaded = $doc->loadXML($xml);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previousSetting);
-
-        return $loaded ? $doc : null;
+        return self::parsePriceQuotes($doc);
     }
 
     /**
@@ -213,28 +166,6 @@ class Rating
         }
 
         return $priceQuotes;
-    }
-
-    /**
-     * Parse an XML response into an array of error codes + messages.
-     *
-     * @internal
-     *
-     * @return list<array{code: string, message: string}>
-     */
-    public static function parseErrorMessages(\DOMDocument $doc): array
-    {
-        $messages = [];
-        // Extract error message data.
-        $nodes = $doc->getElementsByTagName('message');
-        foreach ($nodes as $node) {
-            $messages[] = [
-                'code' => $node->getElementsByTagName('code')->item(0)->textContent ?? '',
-                'message' => $node->getElementsByTagName('description')->item(0)->textContent ?? '',
-            ];
-        }
-
-        return $messages;
     }
 
     /**
