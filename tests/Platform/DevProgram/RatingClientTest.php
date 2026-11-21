@@ -14,6 +14,7 @@ use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
+use iswilson\CanadaPost\Rating\ShipmentOption;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -62,13 +63,34 @@ class RatingClientTest extends TestCase
             'H0H0H0',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            optionCodes: ['so'],
+            shipmentOptions: [new ShipmentOption('so')],
         );
         $request = $historyContainer[0]['request'];
 
         $body = new \DOMDocument();
         $body->loadXML((string) $request->getBody());
         self::assertSame('SO', $body->getElementsByTagName('option-code')->item(0)?->textContent);
+    }
+
+    public function testOptionCodesIncludeAmount(): void
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $this->rating($handlerStack)->getRates(
+            'H0H0H0',
+            new Destination('CA', 'H0H0H0'),
+            new Parcel(500),
+            shipmentOptions: [new ShipmentOption('COD', 100)],
+        );
+        $request = $historyContainer[0]['request'];
+
+        $body = new \DOMDocument();
+        $body->loadXML((string) $request->getBody());
+        self::assertSame('COD', $body->getElementsByTagName('option-code')->item(0)?->textContent);
+        self::assertSame('1.00', $body->getElementsByTagName('option-amount')->item(0)?->textContent);
     }
 
     /**

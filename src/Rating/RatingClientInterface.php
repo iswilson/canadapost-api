@@ -25,7 +25,7 @@ interface RatingClientInterface
      *   Destination country and postal/ZIP code.
      * @param Parcel $parcel
      *   Parcel characteristics (weight, length, width, height).
-     * @param list<string> $optionCodes
+     * @param list<ShipmentOption> $shipmentOptions
      *   Shipment options.
      * @param list<string> $serviceCodes
      *   Specific services to be rated.
@@ -39,7 +39,7 @@ interface RatingClientInterface
         string $originPostalCode,
         Destination $destination,
         Parcel $parcel,
-        array $optionCodes = [],
+        array $shipmentOptions = [],
         array $serviceCodes = [],
     ): array;
 }

@@ -10,6 +10,7 @@ use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
 use iswilson\CanadaPost\Rating\RatingClientInterface;
+use iswilson\CanadaPost\Rating\ShipmentOption;
 
 /**
  * Rating contains Canada Post API calls for package rates.
@@ -26,14 +27,14 @@ final readonly class RatingClient implements RatingClientInterface
         string $originPostalCode,
         Destination $destination,
         Parcel $parcel,
-        array $optionCodes = [],
+        array $shipmentOptions = [],
         array $serviceCodes = [],
     ): array {
         $payload = $this->buildRequestXml(
             Destination::normalizeCanadianPostalCode($originPostalCode),
             $destination,
             $parcel,
-            $this->parseOptionCodes($optionCodes),
+            ShipmentOption::unique($shipmentOptions),
             $this->parseServiceCodes($serviceCodes),
         );
 
@@ -53,7 +54,7 @@ final readonly class RatingClient implements RatingClientInterface
     }
 
     /**
-     * @param list<string> $optionCodes
+     * @param list<ShipmentOption> $shipmentOptions
      * @param list<string> $serviceCodes
      *
      * @throws \DOMException
@@ -62,7 +63,7 @@ final readonly class RatingClient implements RatingClientInterface
         string $originPostalCode,
         Destination $destination,
         Parcel $parcel,
-        array $optionCodes,
+        array $shipmentOptions,
         array $serviceCodes,
     ): string {
         $doc = new \DOMDocument('1.0', 'UTF-8');
@@ -85,13 +86,13 @@ final readonly class RatingClient implements RatingClientInterface
         }
 
         // Options.
-        if ($optionCodes !== []) {
+        if ($shipmentOptions !== []) {
             $options = $root->appendChild(
                 $doc->createElement('options'),
             );
 
             // Option.
-            foreach ($optionCodes as $optionCode) {
+            foreach ($shipmentOptions as $shipmentOption) {
                 $option = $options->appendChild(
                     $doc->createElement('option'),
                 );
@@ -99,7 +100,14 @@ final readonly class RatingClient implements RatingClientInterface
                 // Option code.
                 $option->appendChild(
                     $doc->createElement('option-code'),
-                )->textContent = $optionCode;
+                )->textContent = $shipmentOption->code;
+
+                // Option amount.
+                if ($shipmentOption->amountCents !== null) {
+                    $option->appendChild(
+                        $doc->createElement('option-amount'),
+                    )->textContent = self::formatDecimal($shipmentOption->amountCents, 2);
+                }
             }
         }
 
@@ -344,60 +352,5 @@ final readonly class RatingClient implements RatingClientInterface
         // Ensure cents are 2 digits long and stitch back together.
         $cents = str_pad((string) $cents, 2, '0');
         return (int) ($dollars . $cents);
-    }
-
-    /**
-     * Get the Canada Post-specific option codes.
-     *
-     * @return array<string, string>
-     *   The array of option codes.
-     *
-     * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
-     */
-    public static function getOptionCodes(): array
-    {
-        return [
-            'SO' => 'Signature (SO)',
-            'PA18' => 'Proof of Age Required - 18 (PA18)',
-            'PA19' => 'Proof of Age Required - 19 (PA19)',
-            'HFP' => 'Card for pickup (HFP)',
-            'DNS' => 'Do not safe drop (DNS)',
-            'LAD' => 'Leave at door - do not card (LAD)',
-        ];
-    }
-
-    /**
-     * Helper function to extract the option codes.
-     *
-     * @param list<string> $optionCodes
-     *   List of option codes.
-     *
-     * @return list<string>
-     *   List of options.
-     *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
-     */
-    protected function parseOptionCodes(array $optionCodes): array
-    {
-        $valid_options = [];
-        foreach ($optionCodes as $optionCode) {
-            if (!array_key_exists(strtoupper($optionCode), self::getOptionCodes())) {
-                $message = sprintf(
-                    'Unsupported option code. Supported options are: %s',
-                    implode(', ', array_keys(self::getOptionCodes())),
-                );
-                throw new InvalidArgumentException($message);
-            }
-            // @todo Perhaps we should check for conflicts here, might be overkill.
-            // From Canada Post docs:
-            // There are some options that can be applied to a shipment that
-            // conflict with the presence of another option. You can use the
-            // "Get Option" call in advance to check the contents of the
-            // <conflicting-options> group from a Get Option call for options
-            // selected by end users or options available for a given service.
-            $valid_options[] = strtoupper($optionCode);
-        }
-
-        return $valid_options;
     }
 }

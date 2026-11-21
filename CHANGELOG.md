@@ -9,13 +9,14 @@
 - The following tracking summary response fields are redacted from the logs: destination postal ID, customer reference fields, signatory name.
 - New class `Platform\DevProgram\ServiceInfoClient` implementing `ServiceInfo\ServiceInfoClientInterface` interface. Methods are accessible through `Platform\DevProgram\DevProgram::serviceInfo()`.
 - New value class `ServiceInfo\InfoMessage` holds service information messages.
+- New value class `Rating\ShipmentOption` holds and validates option codes.
 
 ### Changed
 - **BREAKING:** `Platform\DevProgram\DevProgram::tracking()` now returns `Tracking\TrackingClientInterface`.
 - **BREAKING:** `TrackingClient::getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
 - **BREAKING:** `Platform\DevProgram\DevProgram::rating()` now returns `Rating\RatingClientInterface`.
 - **BREAKING:** Moved `Rating` to `Platform\DevProgram\RatingClient` implementing `Rating\RatingClientInterface`.
-- **BREAKING:** `RatingClient::getRates()` uses separate parameters for option/service codes instead of a combined array. The options array parameter is removed.
+- **BREAKING:** `RatingClient::getRates()` uses separate parameters `$shipmentOptions` and `$serviceCodes` instead of a combined array. The `$options` array parameter is removed.
 - **BREAKING:** `ServiceInfoClient::getServiceInfo()` returns a list of `ServiceInfo\InfoMessage` instead of an array.
 - Refactored how the request in `RatingClient::getRates()` is built and removed `openlss/lib-array2xml` dependency.
 
@@ -25,6 +26,7 @@
 - **BREAKING:** Removed `getDetails()`, `getSignatureImage()`, `getDeliveryConfirmationCertificate()` methods.
 - **BREAKING:** Removed original `ServiceInfo` class.
 - **BREAKING:** Removed `ClientBase` and `Exception\ClientException`.
+- **BREAKING:** Removed `getOptionCodes()` from `RatingClient`, use `ShipmentOption::CODES`.
 
 ## [0.5.0] - 2026-11-19
 
