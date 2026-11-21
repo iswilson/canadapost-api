@@ -23,6 +23,7 @@
 - **BREAKING:** Removed original `Tracking` class.
 - **BREAKING:** Removed `getDetails()`, `getSignatureImage()`, `getDeliveryConfirmationCertificate()` methods.
 - **BREAKING:** Removed original `ServiceInfo` class.
+- **BREAKING:** Removed `ClientBase` and `Exception\ClientException`.
 
 ## [0.5.0] - 2026-11-19
 
