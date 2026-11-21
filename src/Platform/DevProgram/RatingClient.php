@@ -291,21 +291,27 @@ final readonly class RatingClient implements RatingClientInterface
      * @return list<string>
      *   The list of services to look up.
      */
-    protected function parseServiceCodes(array $serviceCodes): array
+    private function parseServiceCodes(array $serviceCodes): array
     {
         $services = [];
+
         foreach ($serviceCodes as $serviceCode) {
-            if (!array_key_exists(strtoupper($serviceCode), self::getServiceCodes())) {
+            // Convert code to uppercase and remove leading/trailing whitespace.
+            $serviceCode = strtoupper(trim($serviceCode));
+
+            // Check if code is in list of valid services.
+            if (!array_key_exists($serviceCode, self::getServiceCodes())) {
                 $message = sprintf(
                     'Unsupported service code. Supported services are: %s',
                     implode(', ', array_keys(self::getServiceCodes())),
                 );
                 throw new InvalidArgumentException($message);
             }
-            $services[] = strtoupper($serviceCode);
+            $services[] = $serviceCode;
         }
 
-        return $services;
+        // Dedupe and rekey.
+        return array_values(array_unique($services));
     }
 
     /**

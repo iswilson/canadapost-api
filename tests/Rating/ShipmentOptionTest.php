@@ -108,9 +108,9 @@ class ShipmentOptionTest extends TestCase
     {
         $codes = ShipmentOption::unique([
             new ShipmentOption('COV', 100),
-            new ShipmentOption('COV', 100),
+            new ShipmentOption('cov', 100),
             new ShipmentOption('SO'),
-            new ShipmentOption('SO'),
+            new ShipmentOption('so'),
         ]);
         self::assertCount(2, $codes);
         self::assertEquals(new ShipmentOption('COV', 100), $codes[0]);

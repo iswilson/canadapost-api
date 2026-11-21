@@ -32,7 +32,7 @@ class RatingClientTest extends TestCase
 {
     use HttpMockHandlerTrait;
 
-    public function testServiceCodesAreCapitalized(): void
+    public function testServiceCodesAreTrimmedAndCapitalized(): void
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
@@ -43,7 +43,7 @@ class RatingClientTest extends TestCase
             'K1A0B1',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            serviceCodes: ['dom.xp'],
+            serviceCodes: ['  dom.xp   '],
         );
         $request = $historyContainer[0]['request'];
 
@@ -52,7 +52,33 @@ class RatingClientTest extends TestCase
         self::assertSame('DOM.XP', $body->getElementsByTagName('service-code')->item(0)?->textContent);
     }
 
-    public function testOptionCodesAreCapitalized(): void
+    public function testServiceCodesAreDeduplicated(): void
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+        ]);
+
+        $this->rating($handlerStack)->getRates(
+            'K1A0B1',
+            new Destination('CA', 'H0H0H0'),
+            new Parcel(500),
+            serviceCodes: [
+                'dom.ep',
+                'DOM.eP',
+                'DOM.XP',
+            ],
+        );
+        $request = $historyContainer[0]['request'];
+
+        $body = new \DOMDocument();
+        $body->loadXML((string) $request->getBody());
+        self::assertCount(2, $body->getElementsByTagName('service-code'));
+        self::assertSame('DOM.EP', $body->getElementsByTagName('service-code')->item(0)?->textContent);
+        self::assertSame('DOM.XP', $body->getElementsByTagName('service-code')->item(1)?->textContent);
+    }
+
+    public function testOptionCodesAreTrimmedAndCapitalized(): void
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
@@ -63,7 +89,7 @@ class RatingClientTest extends TestCase
             'H0H0H0',
             new Destination('CA', 'H0H0H0'),
             new Parcel(500),
-            shipmentOptions: [new ShipmentOption('so')],
+            shipmentOptions: [new ShipmentOption('  so   ')],
         );
         $request = $historyContainer[0]['request'];
 
