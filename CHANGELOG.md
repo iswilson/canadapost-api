@@ -12,11 +12,12 @@
 
 ### Changed
 - **BREAKING:** `Platform\DevProgram\DevProgram::tracking()` now returns `Tracking\TrackingClientInterface`.
-- **BREAKING:** `Tracking::getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
+- **BREAKING:** `TrackingClient::getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
 - **BREAKING:** `Platform\DevProgram\DevProgram::rating()` now returns `Rating\RatingClientInterface`.
 - **BREAKING:** Moved `Rating` to `Platform\DevProgram\RatingClient` implementing `Rating\RatingClientInterface`.
-- **BREAKING:** `Rating::getRates()` uses separate parameters for option/service codes instead of a combined array. The options array parameter is removed.
-- **BREAKING:** `ServiceInfo::getServiceInfo()` returns a list of `ServiceInfo\InfoMessage` instead of an array.
+- **BREAKING:** `RatingClient::getRates()` uses separate parameters for option/service codes instead of a combined array. The options array parameter is removed.
+- **BREAKING:** `ServiceInfoClient::getServiceInfo()` returns a list of `ServiceInfo\InfoMessage` instead of an array.
+- Refactored how the request in `RatingClient::getRates()` is built and removed `openlss/lib-array2xml` dependency.
 
 ### Removed
 - **BREAKING:** Removed deprecated classes `NCShipment`, `PostOffice`, `Returns`, `Shipment`.

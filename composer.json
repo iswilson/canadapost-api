@@ -17,7 +17,6 @@
     "require": {
         "php": ">=8.3",
         "guzzlehttp/guzzle": "^7.0",
-        "openlss/lib-array2xml": "^0.5.1",
         "psr/log": "^2.0 || ^3.0",
         "ext-dom": "*",
         "ext-libxml": "*"

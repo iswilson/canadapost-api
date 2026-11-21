@@ -10,7 +10,6 @@ use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
 use iswilson\CanadaPost\Rating\RatingClientInterface;
-use LSS\Array2XML;
 
 /**
  * Rating contains Canada Post API calls for package rates.
@@ -30,55 +29,13 @@ final readonly class RatingClient implements RatingClientInterface
         array $optionCodes = [],
         array $serviceCodes = [],
     ): array {
-        $content = [
-            'customer-number' => $this->customerNumber,
-            'origin-postal-code' => Destination::normalizeCanadianPostalCode($originPostalCode),
-        ];
-
-        // Destination.
-        switch ($destination->countryCode) {
-            case 'CA':
-                $content['destination']['domestic']['postal-code'] = $destination->postalCode ?? throw new \LogicException('Missing postal code.');
-                break;
-            case 'US':
-                $content['destination']['united-states']['zip-code'] = $destination->postalCode ?? throw new \LogicException('Missing postal code.');
-                break;
-            default:
-                $content['destination']['international']['country-code'] = $destination->countryCode;
-                if ($destination->postalCode !== null) {
-                    $content['destination']['international']['postal-code'] = $destination->postalCode;
-                }
-        }
-
-        // Convert weight to kilograms.
-        $content['parcel-characteristics']['weight'] = self::formatDecimal($parcel->weightGrams, 3);
-        if ($parcel->hasDimensions()) {
-            // Convert dimensions to centimeters.
-            $content['parcel-characteristics']['dimensions'] = [
-                'length' => self::formatDecimal($parcel->lengthMm, 1),
-                'width' => self::formatDecimal($parcel->widthMm, 1),
-                'height' => self::formatDecimal($parcel->heightMm, 1),
-            ];
-        }
-
-        if ($serviceCodes !== []) {
-            $content['services']['service-code'] = $this->parseServiceCodes($serviceCodes);
-        }
-        if ($optionCodes !== []) {
-            $content['options']['option'] = $this->parseOptionCodes($optionCodes);
-        }
-
-        if ($this->contractId !== null) {
-            $content['contract-id'] = $this->contractId;
-        }
-
-        $xml = Array2XML::createXML('mailing-scenario', $content);
-        $envelope = $xml->documentElement;
-        $envelope->setAttribute(
-            'xmlns',
-            'http://www.canadapost.ca/ws/ship/rate-v4',
+        $payload = $this->buildRequestXml(
+            Destination::normalizeCanadianPostalCode($originPostalCode),
+            $destination,
+            $parcel,
+            $this->parseOptionCodes($optionCodes),
+            $this->parseServiceCodes($serviceCodes),
         );
-        $payload = $xml->saveXML();
 
         $response = $this->transport->send(
             'POST',
@@ -93,6 +50,152 @@ final readonly class RatingClient implements RatingClientInterface
         $doc = XmlResponse::toDOMDocument($response, 'price-quotes');
 
         return self::parsePriceQuotes($doc);
+    }
+
+    /**
+     * @param list<string> $optionCodes
+     * @param list<string> $serviceCodes
+     *
+     * @throws \DOMException
+     */
+    private function buildRequestXml(
+        string $originPostalCode,
+        Destination $destination,
+        Parcel $parcel,
+        array $optionCodes,
+        array $serviceCodes,
+    ): string {
+        $doc = new \DOMDocument('1.0', 'UTF-8');
+
+        // Mailing scenario, the namespace will be added at the end.
+        $root = $doc->appendChild(
+            $doc->createElement('mailing-scenario'),
+        );
+
+        // Customer number.
+        $root->appendChild(
+            $doc->createElement('customer-number'),
+        )->textContent = $this->customerNumber;
+
+        // Contract ID if provided.
+        if ($this->contractId !== null) {
+            $root->appendChild(
+                $doc->createElement('contract-id'),
+            )->textContent = $this->contractId;
+        }
+
+        // Options.
+        if ($optionCodes !== []) {
+            $options = $root->appendChild(
+                $doc->createElement('options'),
+            );
+
+            // Option.
+            foreach ($optionCodes as $optionCode) {
+                $option = $options->appendChild(
+                    $doc->createElement('option'),
+                );
+
+                // Option code.
+                $option->appendChild(
+                    $doc->createElement('option-code'),
+                )->textContent = $optionCode;
+            }
+        }
+
+        // Parcel.
+        $parcelCharacteristics = $root->appendChild(
+            $doc->createElement('parcel-characteristics'),
+        );
+        // Parcel weight, converted to kilograms.
+        $parcelCharacteristics->appendChild(
+            $doc->createElement('weight'),
+        )->textContent = self::formatDecimal($parcel->weightGrams, 3);
+        // Parcel dimensions if provided, converted to centimeters.
+        if ($parcel->hasDimensions()) {
+            $dimensions = $parcelCharacteristics->appendChild(
+                $doc->createElement('dimensions'),
+            );
+
+            // Length.
+            $dimensions->appendChild(
+                $doc->createElement('length'),
+            )->textContent = self::formatDecimal($parcel->lengthMm, 1);
+            // Width.
+            $dimensions->appendChild(
+                $doc->createElement('width'),
+            )->textContent = self::formatDecimal($parcel->widthMm, 1);
+            // Height.
+            $dimensions->appendChild(
+                $doc->createElement('height'),
+            )->textContent = self::formatDecimal($parcel->heightMm, 1);
+        }
+
+        // Services.
+        if ($serviceCodes !== []) {
+            $services = $root->appendChild(
+                $doc->createElement('services'),
+            );
+
+            // Service.
+            foreach ($serviceCodes as $serviceCode) {
+                // Service code.
+                $services->appendChild(
+                    $doc->createElement('service-code'),
+                )->textContent = $serviceCode;
+            }
+        }
+
+        // Origin postal code.
+        $root->appendChild(
+            $doc->createElement('origin-postal-code'),
+        )->textContent = $originPostalCode;
+
+        // Destination.
+        $destinationElement = $root->appendChild(
+            $doc->createElement('destination'),
+        );
+        // Destination type (Canada / US / International).
+        switch ($destination->countryCode) {
+            case 'CA':
+                $type = $destinationElement->appendChild(
+                    $doc->createElement('domestic'),
+                );
+                // Postal code required.
+                $type->appendChild(
+                    $doc->createElement('postal-code'),
+                )->textContent = $destination->postalCode ?? throw new \LogicException('Missing postal code.');
+                break;
+
+            case 'US':
+                $type = $destinationElement->appendChild(
+                    $doc->createElement('united-states'),
+                );
+                // Zip code required.
+                $type->appendChild(
+                    $doc->createElement('zip-code'),
+                )->textContent = $destination->postalCode ?? throw new \LogicException('Missing zip code.');
+                break;
+
+            default:
+                $type = $destinationElement->appendChild(
+                    $doc->createElement('international'),
+                );
+                $type->appendChild(
+                    $doc->createElement('country-code'),
+                )->textContent = $destination->countryCode;
+                // Optional postal code.
+                if ($destination->postalCode !== null) {
+                    $type->appendChild(
+                        $doc->createElement('postal-code'),
+                    )->textContent = $destination->postalCode;
+                }
+        }
+
+        // Children will go into this namespace as well.
+        $root->setAttribute('xmlns', 'http://www.canadapost.ca/ws/ship/rate-v4');
+
+        return $doc->saveXML();
     }
 
     /**
@@ -269,8 +372,8 @@ final readonly class RatingClient implements RatingClientInterface
      * @param list<string> $optionCodes
      *   List of option codes.
      *
-     * @return list<array{option-code: string}>
-     *   The list of options with the option-code.
+     * @return list<string>
+     *   List of options.
      *
      * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
      */
@@ -292,9 +395,7 @@ final readonly class RatingClient implements RatingClientInterface
             // "Get Option" call in advance to check the contents of the
             // <conflicting-options> group from a Get Option call for options
             // selected by end users or options available for a given service.
-            $valid_options[] = [
-                'option-code' => strtoupper($optionCode),
-            ];
+            $valid_options[] = strtoupper($optionCode);
         }
 
         return $valid_options;
