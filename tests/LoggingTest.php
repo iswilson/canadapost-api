@@ -8,7 +8,6 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\CanadaPost;
-use iswilson\CanadaPost\ClientBase;
 use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
@@ -19,7 +18,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(CanadaPost::class)]
-#[CoversClass(ClientBase::class)]
 #[CoversClass(DevProgram::class)]
 class LoggingTest extends TestCase
 {

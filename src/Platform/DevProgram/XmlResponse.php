@@ -137,4 +137,36 @@ final class XmlResponse
 
         return $date;
     }
+
+    /**
+     * Convert ISO datetime string to DateTimeImmutable, truncated to seconds.
+     *
+     * @return \DateTimeImmutable|null
+     *   Returns null if element is empty or missing.
+     *
+     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     *   On invalid or malformed date.
+     */
+    public static function extractIsoDateTime(\DOMElement $element, string $qualifiedName): ?\DateTimeImmutable
+    {
+        $text = self::extractText($element, $qualifiedName);
+        if ($text === null) {
+            return null;
+        }
+
+        // Cut anything smaller than a second.
+        $text = preg_replace('/(T\d{2}:\d{2}:\d{2})([\d.]?)+/', '$1', $text);
+
+        $date = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $text);
+        if ($date === false) {
+            throw new CanadaPostException('Canada Post API returned a malformed date.');
+        }
+
+        // Formatted date should match text (convert Z to timezone offset).
+        if ($date->format(\DateTimeInterface::ATOM) !== str_replace('Z', '+00:00', $text)) {
+            throw new CanadaPostException('Canada Post API returned an invalid date.');
+        }
+
+        return $date;
+    }
 }

@@ -6,6 +6,7 @@ namespace iswilson\CanadaPost\Platform\DevProgram;
 
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating\RatingClientInterface;
+use iswilson\CanadaPost\ServiceInfo\ServiceInfoClientInterface;
 use iswilson\CanadaPost\Tracking\TrackingClientInterface;
 use Psr\Log\LoggerInterface;
 
@@ -98,5 +99,13 @@ final readonly class DevProgram
     public function tracking(): TrackingClientInterface
     {
         return new TrackingClient($this->transport);
+    }
+
+    /**
+     * Service Information endpoint.
+     */
+    public function serviceInfo(): ServiceInfoClientInterface
+    {
+        return new ServiceInfoClient($this->transport);
     }
 }

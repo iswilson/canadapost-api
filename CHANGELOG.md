@@ -3,22 +3,26 @@
 ## [Unreleased]
 
 ### Added
-- New interfaces (intended for testing and internal use) `Tracking\TrackingClientInterface` and `Rating\RatingClientInterface` for implementing service clients.
+- New interfaces (intended for testing and internal use) `Tracking\TrackingClientInterface`, `ServiceInfo\ServiceInfoClientInterface` and `Rating\RatingClientInterface`.
 - New class `Platform\DevProgram\TrackingClient` implementing `Tracking\TrackingClientInterface` interface.
 - New value class `Tracking\PinSummary` holds tracking summary fields.
 - The following tracking summary response fields are redacted from the logs: destination postal ID, customer reference fields, signatory name.
+- New class `Platform\DevProgram\ServiceInfoClient` implementing `ServiceInfo\ServiceInfoClientInterface` interface. Methods are accessible through `Platform\DevProgram\DevProgram::serviceInfo()`.
+- New value class `ServiceInfo\InfoMessage` holds service information messages.
 
 ### Changed
 - **BREAKING:** `Platform\DevProgram\DevProgram::tracking()` now returns `Tracking\TrackingClientInterface`.
-- **BREAKING:** `getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
+- **BREAKING:** `Tracking::getSummary()` only takes a PIN and returns `Tracking\PinSummary`.
 - **BREAKING:** `Platform\DevProgram\DevProgram::rating()` now returns `Rating\RatingClientInterface`.
 - **BREAKING:** Moved `Rating` to `Platform\DevProgram\RatingClient` implementing `Rating\RatingClientInterface`.
-- **BREAKING:** `getRates()` uses separate parameters for option/service codes instead of a combined array. The options parameter is removed.
+- **BREAKING:** `Rating::getRates()` uses separate parameters for option/service codes instead of a combined array. The options array parameter is removed.
+- **BREAKING:** `ServiceInfo::getServiceInfo()` returns a list of `ServiceInfo\InfoMessage` instead of an array.
 
 ### Removed
 - **BREAKING:** Removed deprecated classes `NCShipment`, `PostOffice`, `Returns`, `Shipment`.
 - **BREAKING:** Removed original `Tracking` class.
 - **BREAKING:** Removed `getDetails()`, `getSignatureImage()`, `getDeliveryConfirmationCertificate()` methods.
+- **BREAKING:** Removed original `ServiceInfo` class.
 
 ## [0.5.0] - 2026-11-19
 

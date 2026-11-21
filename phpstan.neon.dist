@@ -8,5 +8,4 @@ parameters:
     excludePaths:
         analyse:
             - src/ClientBase.php
-            - src/ServiceInfo.php
             - tests/Mocks

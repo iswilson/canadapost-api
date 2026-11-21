@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlResponse::class)]
@@ -228,6 +229,66 @@ class XmlResponseTest extends TestCase
             'event-date-time',
             '!Y-m-d:His',
         );
+    }
+
+    #[DataProvider('getValidISODateTimes')]
+    public function testValidISODateTime(string $dateTime, \DateTimeImmutable $expectedDateTime): void
+    {
+        $element = XmlResponse::load("<test-wrapper><test>{$dateTime}</test></test-wrapper>")
+            ->getElementsByTagName('test-wrapper')->item(0);
+        self::assertInstanceOf(\DOMElement::class, $element);
+        $result = XmlResponse::extractIsoDateTime($element, 'test');
+        self::assertSame($expectedDateTime->format(\DateTimeInterface::ATOM), $result->format(\DateTimeInterface::ATOM));
+    }
+
+    /**
+     * @return iterable<string, array{string, \DateTimeImmutable}>
+     */
+    public static function getValidISODateTimes(): iterable
+    {
+        yield 'Negative time offset' => ['2026-11-20T20:00:00-05:00', new \DateTimeImmutable('2026-11-20T20:00:00-05:00')];
+        yield 'Positive time offset' => ['2026-11-20T20:00:00+05:00', new \DateTimeImmutable('2026-11-20T20:00:00+05:00')];
+        yield 'UTC zero offset' => ['2026-11-20T20:00:00+00:00', new \DateTimeImmutable('2026-11-20T20:00:00+00:00')];
+        yield 'UTC Zulu offset' => ['2026-11-20T20:00:00Z', new \DateTimeImmutable('2026-11-20T20:00:00+00:00')];
+        yield 'UTC with milliseconds' => ['2026-11-20T20:00:00.500+00:00', new \DateTimeImmutable('2026-11-20T20:00:00+00:00')];
+    }
+
+    public function testISODateTimeElementMissing(): void
+    {
+        $element = XmlResponse::load("<test-wrapper></test-wrapper>")
+            ->getElementsByTagName('test-wrapper')->item(0);
+        self::assertInstanceOf(\DOMElement::class, $element);
+        $result = XmlResponse::extractIsoDateTime($element, 'test');
+        self::assertNull($result);
+    }
+
+    public function testISODateTimeElementEmpty(): void
+    {
+        $element = XmlResponse::load("<test-wrapper><test></test></test-wrapper>")
+            ->getElementsByTagName('test-wrapper')->item(0);
+        self::assertInstanceOf(\DOMElement::class, $element);
+        $result = XmlResponse::extractIsoDateTime($element, 'test');
+        self::assertNull($result);
+    }
+
+    public function testMalformedISODateTime(): void
+    {
+        $element = XmlResponse::load("<test-wrapper><test>not a date</test></test-wrapper>")
+            ->getElementsByTagName('test-wrapper')->item(0);
+        self::assertInstanceOf(\DOMElement::class, $element);
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('malformed date');
+        XmlResponse::extractIsoDateTime($element, 'test');
+    }
+
+    public function testInvalidISODateTime(): void
+    {
+        $element = XmlResponse::load("<test-wrapper><test>2026-02-30T20:00:00+05:00</test></test-wrapper>")
+            ->getElementsByTagName('test-wrapper')->item(0);
+        self::assertInstanceOf(\DOMElement::class, $element);
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('invalid date');
+        XmlResponse::extractIsoDateTime($element, 'test');
     }
 
     private function xmlResponseToDOMDocument(string $xml, int $statusCode = 200, string $expectedRoot = 'test'): \DOMDocument
