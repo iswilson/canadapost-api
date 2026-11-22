@@ -6,6 +6,7 @@ namespace iswilson\CanadaPost\Tracking;
 
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Exception\NotFoundException;
 
 /**
  * Tracking services for a Canada Post platform.
@@ -30,6 +31,8 @@ interface TrackingClientInterface
      *
      * @throws CanadaPostException
      * @throws InvalidArgumentException
+     * @throws NotFoundException
+     *   When error response contains: No Pin History (004).
      */
     public function getSummary(string $pin): PinSummary;
 }

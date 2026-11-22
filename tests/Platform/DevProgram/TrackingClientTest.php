@@ -7,6 +7,7 @@ namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Exception\NotFoundException;
 use iswilson\CanadaPost\Platform\DevProgram\TrackingClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
@@ -197,6 +198,49 @@ final class TrackingClientTest extends TestCase
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('empty PIN');
         $this->tracking($handlerStack)->getSummary('ABCDEF1234567890');
+    }
+
+    public function testPinNotFoundError(): void
+    {
+        $xml = <<<'EOF'
+            <messages xmlns="http://www.canadapost.ca/ws/messages">
+                <message>
+                    <code>004</code>
+                    <description>No Pin History</description>
+                </message>
+            </messages>
+        EOF;
+
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(404, [], $xml),
+        ]);
+
+        try {
+            $this->tracking($handlerStack)->getSummary('ABCDEF1234567890');
+            self::fail('Expected NotFoundException exception to be thrown.');
+        } catch (NotFoundException $e) {
+            self::assertStringContainsString('no tracking history', $e->getMessage());
+            self::assertTrue($e->hasErrorCode('004'));
+            self::assertSame(404, $e->httpStatusCode);
+            self::assertInstanceOf(CanadaPostException::class, $e->getPrevious());
+        }
+    }
+
+    public function testOtherErrors(): void
+    {
+        $historyContainer = [];
+        $handlerStack = $this->handlerStack($historyContainer, [
+            new Response(400, [], FixtureFile::load('DevProgram/error-multiple.xml')),
+        ]);
+
+        try {
+            $this->tracking($handlerStack)->getSummary('ABCDEF1234567890');
+            self::fail('Expected CanadaPostException exception to be thrown.');
+        } catch (CanadaPostException $e) {
+            self::assertStringContainsString('request failed', $e->getMessage());
+            self::assertNotInstanceOf(NotFoundException::class, $e);
+        }
     }
 
     public function testInvalidDeliveryOptionCompletedValue(): void

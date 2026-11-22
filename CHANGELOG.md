@@ -10,6 +10,7 @@
 - New class `Platform\DevProgram\ServiceInfoClient` implementing `ServiceInfo\ServiceInfoClientInterface` interface. Methods are accessible through `Platform\DevProgram\DevProgram::serviceInfo()`.
 - New value class `ServiceInfo\InfoMessage` holds service information messages.
 - New value class `Rating\ShipmentOption` holds and validates option codes.
+- New exception `Exception\NotFoundException` (extends `Exception\CanadaPostException`) handles tracking no PIN history error.
 
 ### Changed
 - **BREAKING:** `Platform\DevProgram\DevProgram::tracking()` now returns `Tracking\TrackingClientInterface`.

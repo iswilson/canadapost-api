@@ -6,6 +6,7 @@ namespace iswilson\CanadaPost\Platform\DevProgram;
 
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Exception\NotFoundException;
 use iswilson\CanadaPost\Tracking\DeliveryOptionCompleted;
 use iswilson\CanadaPost\Tracking\PinSummary;
 use iswilson\CanadaPost\Tracking\TrackingClientInterface;
@@ -32,7 +33,19 @@ final readonly class TrackingClient implements TrackingClientInterface
             ],
         );
 
-        $doc = XmlResponse::toDOMDocument($response, 'tracking-summary');
+        try {
+            $doc = XmlResponse::toDOMDocument($response, 'tracking-summary');
+        } catch (CanadaPostException $e) {
+            if ($e->hasErrorCode('004')) {
+                throw new NotFoundException(
+                    'Canada Post API has no tracking history for the PIN.',
+                    $e->errors,
+                    $e->httpStatusCode,
+                    $e,
+                );
+            }
+            throw $e;
+        }
 
         $pinSummaries = self::parseTrackingSummary($doc);
         if ($pinSummaries === []) {
