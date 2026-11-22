@@ -15,6 +15,7 @@ use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
 use iswilson\CanadaPost\Rating\ShipmentOption;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -36,7 +37,7 @@ class RatingClientTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates(
@@ -56,7 +57,7 @@ class RatingClientTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates(
@@ -82,7 +83,7 @@ class RatingClientTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates(
@@ -102,7 +103,7 @@ class RatingClientTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates(
@@ -124,12 +125,10 @@ class RatingClientTest extends TestCase
      */
     public function testValidRatingResponse(): void
     {
-        $response = $this->getRatingResponse(file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml'));
+        $response = $this->getRatingResponse(FixtureFile::load('DevProgram/get-rates.xml'));
         self::assertEquals([
-            new PriceQuote('DOM.EP', 'Expedited Parcel', 1021),
-            new PriceQuote('DOM.PC', 'Priority Courier', 2520),
-            new PriceQuote('DOM.RP', 'Regular Parcel', 1021),
-            new PriceQuote('DOM.XP', 'Xpresspost', 1364),
+            new PriceQuote('DOM.EP', 'Expedited Parcel', 1130, hstCents: 130),
+            new PriceQuote('DOM.XP', 'Xpresspost', 2260, hstCents: 260),
         ], $response);
     }
 
@@ -142,13 +141,13 @@ class RatingClientTest extends TestCase
     public function testResponseWithErrorMessages(): void
     {
         try {
-            $this->getRatingResponse(file_get_contents(__DIR__ . '/../../Mocks/rating-response-error.xml'));
+            $this->getRatingResponse(FixtureFile::load('DevProgram/error-multiple.xml'));
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertCount(2, $e->errors);
-            self::assertTrue($e->hasErrorCode('7007'));
-            self::assertTrue($e->hasErrorCode('1722'));
-            self::assertStringContainsString('7007, 1722', $e->getMessage());
+            self::assertTrue($e->hasErrorCode('TEST2'));
+            self::assertTrue($e->hasErrorCode('TEST1'));
+            self::assertStringContainsString('TEST2, TEST1', $e->getMessage());
         }
     }
 
@@ -494,7 +493,7 @@ class RatingClientTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);

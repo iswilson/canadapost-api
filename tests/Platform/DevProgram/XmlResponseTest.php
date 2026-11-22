@@ -7,6 +7,7 @@ namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -27,7 +28,7 @@ class XmlResponseTest extends TestCase
     public function testBadRequestAPIResponse(): void
     {
         try {
-            $this->xmlResponseToDOMDocument(file_get_contents(__DIR__ . '/../../Mocks/rating-response-error.xml'), 400);
+            $this->xmlResponseToDOMDocument(FixtureFile::load('DevProgram/error-multiple.xml'), 400);
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(400, $e->httpStatusCode);
@@ -104,13 +105,13 @@ class XmlResponseTest extends TestCase
     public function testResponseWithMultipleErrorMessages(): void
     {
         try {
-            $this->xmlResponseToDOMDocument(file_get_contents(__DIR__ . '/../../Mocks/rating-response-error.xml'));
+            $this->xmlResponseToDOMDocument(FixtureFile::load('DevProgram/error-multiple.xml'));
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertCount(2, $e->errors);
-            self::assertTrue($e->hasErrorCode('7007'));
-            self::assertTrue($e->hasErrorCode('1722'));
-            self::assertStringContainsString('7007, 1722', $e->getMessage());
+            self::assertTrue($e->hasErrorCode('TEST2'));
+            self::assertTrue($e->hasErrorCode('TEST1'));
+            self::assertStringContainsString('TEST2, TEST1', $e->getMessage());
         }
     }
 

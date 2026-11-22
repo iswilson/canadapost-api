@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<info-messages xmlns="http://www.canadapost.ca/ws/serviceinfo-v2">
+    <info-message>
+        <message-type>SO</message-type>
+        <message-text>Message 1.</message-text>
+        <from-datetime>2026-01-01T21:00:00-05:00</from-datetime>
+        <to-datetime>2026-01-02T04:00:00-05:00</to-datetime>
+    </info-message>
+    <info-message>
+        <message-type>SO</message-type>
+        <message-text>Message 2.</message-text>
+        <from-datetime>2026-02-01T21:00:00-05:00</from-datetime>
+        <to-datetime>2026-02-02T04:00:00-05:00</to-datetime>
+    </info-message>
+</info-messages>

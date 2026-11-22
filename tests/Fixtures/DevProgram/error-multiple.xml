@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages xmlns="http://www.canadapost.ca/ws/messages">
+    <message>
+        <code>TEST2</code>
+        <description>Test error number 2.</description>
+    </message>
+    <message>
+        <code>TEST1</code>
+        <description>Test error number 1.</description>
+    </message>
+</messages>

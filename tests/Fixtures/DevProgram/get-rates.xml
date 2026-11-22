@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<price-quotes xmlns="http://www.canadapost.ca/ws/ship/rate-v4">
+    <price-quote>
+        <service-code>DOM.EP</service-code>
+        <service-link rel="service" href="https://ct.soa-gw.canadapost.ca/rs/ship/service/DOM.EP?country=CA"
+                      media-type="application/vnd.cpc.ship.rate-v4+xml"/>
+        <service-name>Expedited Parcel</service-name>
+        <price-details>
+            <base>10.00</base>
+            <taxes>
+                <gst>0.00</gst>
+                <pst>0</pst>
+                <hst>1.30</hst>
+            </taxes>
+            <due>11.30</due>
+            <adjustments>
+                <adjustment>
+                    <adjustment-code>FUELSC</adjustment-code>
+                    <adjustment-name>Fuel surcharge</adjustment-name>
+                    <adjustment-cost>0</adjustment-cost>
+                </adjustment>
+            </adjustments>
+        </price-details>
+        <weight-details/>
+        <service-standard>
+            <am-delivery>false</am-delivery>
+            <guaranteed-delivery>true</guaranteed-delivery>
+            <expected-transit-time>2</expected-transit-time>
+            <expected-delivery-date>2026-12-25</expected-delivery-date>
+        </service-standard>
+    </price-quote>
+    <price-quote>
+        <service-code>DOM.XP</service-code>
+        <service-link rel="service" href="https://ct.soa-gw.canadapost.ca/rs/ship/service/DOM.XP?country=CA"
+                      media-type="application/vnd.cpc.ship.rate-v4+xml"/>
+        <service-name>Xpresspost</service-name>
+        <price-details>
+            <base>20.00</base>
+            <taxes>
+                <gst>0.00</gst>
+                <pst>0</pst>
+                <hst>2.60</hst>
+            </taxes>
+            <due>22.60</due>
+            <options>
+                <option>
+                    <option-code>DC</option-code>
+                    <option-name>Delivery confirmation</option-name>
+                    <option-price>0</option-price>
+                </option>
+            </options>
+        </price-details>
+        <weight-details/>
+        <service-standard>
+            <am-delivery>false</am-delivery>
+            <guaranteed-delivery>true</guaranteed-delivery>
+            <expected-transit-time>1</expected-transit-time>
+            <expected-delivery-date>2026-12-24</expected-delivery-date>
+        </service-standard>
+    </price-quote>
+</price-quotes>

@@ -9,6 +9,7 @@ use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Platform\DevProgram\ServiceInfoClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,7 +27,7 @@ class ServiceInfoClientTest extends TestCase
 
     public function testRequest(): void
     {
-        $xml = file_get_contents(__DIR__ . '/../../Mocks/service-info-success.xml');
+        $xml = FixtureFile::load('DevProgram/get-service-info.xml');
         $request = $this->getServiceInfoTransaction($xml)['request'];
 
         self::assertSame('GET', $request->getMethod());
@@ -38,12 +39,12 @@ class ServiceInfoClientTest extends TestCase
 
     public function testSuccessfulResponse(): void
     {
-        $xml = file_get_contents(__DIR__ . '/../../Mocks/service-info-success.xml');
+        $xml = FixtureFile::load('DevProgram/get-service-info.xml');
         $result = $this->getServiceInfoTransaction($xml)['result'];
 
-        self::assertSame('Please note that we will be performing scheduled maintenance from Saturday, Oct. 12 at 9 p.m. to Sunday, Oct. 13 at 4 a.m. EDT. During this time, Canada Post web services will not be available.', $result[0]->messageText);
-        self::assertSame('2013-10-12T21:00:00-05:00', $result[0]->fromDateTime->format(\DateTimeInterface::ATOM));
-        self::assertSame('2013-10-13T04:00:00-05:00', $result[0]->toDateTime->format(\DateTimeInterface::ATOM));
+        self::assertSame('Message 1.', $result[0]->messageText);
+        self::assertSame('2026-01-01T21:00:00-05:00', $result[0]->fromDateTime->format(\DateTimeInterface::ATOM));
+        self::assertSame('2026-01-02T04:00:00-05:00', $result[0]->toDateTime->format(\DateTimeInterface::ATOM));
     }
 
     public function testSuccessfulResponseWithNoMessages(): void
@@ -55,27 +56,11 @@ class ServiceInfoClientTest extends TestCase
 
     public function testSuccessfulResponseWithMultipleMessages(): void
     {
-        $xml = <<<'EOF'
-          <info-messages>
-              <info-message>
-                  <message-type>SO</message-type>
-                  <message-text>Message 1</message-text>
-                  <from-datetime>2013-10-12T21:00:00-05:00</from-datetime>
-                  <to-datetime>2013-10-13T04:00:00-05:00</to-datetime>
-              </info-message>
-              <info-message>
-                  <message-type>SO</message-type>
-                  <message-text>Message 2</message-text>
-                  <from-datetime>2014-10-12T21:00:00-05:00</from-datetime>
-                  <to-datetime>2014-10-13T04:00:00-05:00</to-datetime>
-              </info-message>
-          </info-messages>
-        EOF;
-        $result = $this->getServiceInfoTransaction($xml)['result'];
+        $result = $this->getServiceInfoTransaction(FixtureFile::load('DevProgram/get-service-info-multiple.xml'))['result'];
 
         self::assertCount(2, $result);
-        self::assertSame('Message 1', $result[0]->messageText);
-        self::assertSame('Message 2', $result[1]->messageText);
+        self::assertSame('Message 1.', $result[0]->messageText);
+        self::assertSame('Message 2.', $result[1]->messageText);
     }
 
     #[DataProvider('missingOrEmptyFields')]
@@ -91,7 +76,7 @@ class ServiceInfoClientTest extends TestCase
      */
     public static function missingOrEmptyFields(): iterable
     {
-        $xml = file_get_contents(__DIR__ . '/../../Mocks/service-info-success.xml');
+        $xml = FixtureFile::load('DevProgram/get-service-info.xml');
         yield 'Empty message text' => [self::emptyField($xml, 'message-text'), 'empty info message'];
         yield 'Empty start date' => [self::emptyField($xml, 'from-datetime'), 'empty start date and time'];
         yield 'Empty end date' => [self::emptyField($xml, 'to-datetime'), 'empty end date and time'];
@@ -102,21 +87,14 @@ class ServiceInfoClientTest extends TestCase
 
     public function testFailedResponse(): void
     {
-        $xml = <<<'EOF'
-            <messages>
-                <message>
-                    <code>9182</code>
-                    <description>The Message Type is invalid.</description>
-                </message>
-            </messages>
-        EOF;
         try {
-            $this->getServiceInfoTransaction($xml, 400)['result'];
+            $this->getServiceInfoTransaction(FixtureFile::load('DevProgram/error-multiple.xml'), 400)['result'];
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException $e) {
             self::assertSame(400, $e->httpStatusCode);
-            self::assertCount(1, $e->errors);
-            self::assertTrue($e->hasErrorCode('9182'));
+            self::assertCount(2, $e->errors);
+            self::assertTrue($e->hasErrorCode('TEST2'));
+            self::assertTrue($e->hasErrorCode('TEST1'));
         }
     }
 

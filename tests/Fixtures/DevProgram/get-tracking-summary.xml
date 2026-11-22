@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tracking-summary>
+<tracking-summary xmlns="http://www.canadapost.ca/ws/track">
     <pin-summary>
         <pin>ABCDEF1234567890</pin>
         <origin-postal-id>H0H</origin-postal-id>
@@ -17,7 +17,7 @@
         <customer-ref-2>testing456</customer-ref-2>
         <return-pin>12345</return-pin>
         <event-type>DELIVERED</event-type>
-        <event-location>Headquarters</event-location>
+        <event-location>OTTAWA,ON</event-location>
         <signatory-name>testing789</signatory-name>
     </pin-summary>
 </tracking-summary>

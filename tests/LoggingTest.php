@@ -13,6 +13,7 @@ use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
 use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -31,14 +32,14 @@ class LoggingTest extends TestCase
     public function testRatingWithoutLogging(): void
     {
         $price_quotes = $this->getRatingResponse();
-        self::assertCount(4, $price_quotes);
+        self::assertCount(2, $price_quotes);
     }
 
     public function testTrackingWithLogging(): void
     {
         $spyLogger = new SpyLogger();
         $mock = new MockHandler([
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/tracking-summary-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-tracking-summary.xml')),
         ]);
         $handlerStack = HandlerStack::create($mock);
 
@@ -62,12 +63,12 @@ class LoggingTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $platform = CanadaPost::devProgram('username', 'password', '123456789', logger: $spyLogger, handler: $handlerStack);
 
-        $mock->append(new Response(200, [], file_get_contents(__DIR__ . '/Mocks/tracking-summary-success.xml')));
+        $mock->append(new Response(200, [], FixtureFile::load('DevProgram/get-tracking-summary.xml')));
         $platform->tracking()->getSummary(
             '1234567890123456',
         );
 
-        $mock->append(new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')));
+        $mock->append(new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')));
         $platform->rating()->getRates(
             'H0H0H0',
             new Destination('CA', 'H0H0H0'),
@@ -83,8 +84,8 @@ class LoggingTest extends TestCase
     private function getRatingResponse(?LoggerInterface $logger = null, int $statusCode = 200): array
     {
         $xml = match ($statusCode) {
-            200 => file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml'),
-            400 => file_get_contents(__DIR__ . '/Mocks/rating-response-error.xml'),
+            200 => FixtureFile::load('DevProgram/get-rates.xml'),
+            400 => FixtureFile::load('DevProgram/error-multiple.xml'),
             default => '',
         };
 

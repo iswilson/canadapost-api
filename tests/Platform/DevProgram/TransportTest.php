@@ -14,6 +14,7 @@ use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -107,7 +108,7 @@ class TransportTest extends TestCase
 
     public function testHttp200Response(): void
     {
-        $xml = file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml');
+        $xml = FixtureFile::load('DevProgram/get-rates.xml');
         $mockResponse = new Response(body: $xml);
         $response = $this->captureHttpTransaction('POST', 'test', mockResponse: $mockResponse)['result'];
         self::assertSame(200, $response->getStatusCode());
@@ -136,7 +137,7 @@ class TransportTest extends TestCase
     #[DataProvider('getHttp4xxAnd5xxResponseStatusCodes')]
     public function testHttp4xxAnd5xxResponse(int $statusCode): void
     {
-        $xml = file_get_contents(__DIR__ . '/../../Mocks/rating-response-error.xml');
+        $xml = FixtureFile::load('DevProgram/error-multiple.xml');
         $mockResponse = new Response($statusCode, body: $xml);
         $response = $this->captureHttpTransaction('POST', 'test', mockResponse: $mockResponse)['result'];
         self::assertSame($statusCode, $response->getStatusCode());

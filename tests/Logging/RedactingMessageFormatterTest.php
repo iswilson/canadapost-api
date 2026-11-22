@@ -12,6 +12,7 @@ use iswilson\CanadaPost\Logging\RedactingMessageFormatter;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -132,7 +133,7 @@ class RedactingMessageFormatterTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         CanadaPost::devProgram('username', 'password', '12345789', '135792468', logger: $logger, handler: $handlerStack)
@@ -149,7 +150,7 @@ class RedactingMessageFormatterTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../Mocks/tracking-summary-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-tracking-summary.xml')),
         ]);
 
         CanadaPost::devProgram('username', 'password', '12345789', '135792468', logger: $logger, handler: $handlerStack)

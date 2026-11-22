@@ -9,6 +9,7 @@ use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\TrackingClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -69,26 +70,7 @@ class TrackingClientTest extends TestCase
 
     public function testFullSummary(): void
     {
-        $xml = <<<'EOF'
-            <tracking-summary>
-                <pin-summary>
-                    <pin>ABCDEF1234567890</pin>
-                    <origin-postal-id>H0H</origin-postal-id>
-                    <destination-postal-id>K1A</destination-postal-id>
-                    <destination-province>ON</destination-province>
-                    <service-name>Xpresspost</service-name>
-                    <mailed-on-date>2026-12-22</mailed-on-date>
-                    <expected-delivery-date>2026-12-23</expected-delivery-date>
-                    <actual-delivery-date>2026-12-25</actual-delivery-date>
-                    <delivery-option-completed-ind>1</delivery-option-completed-ind>
-                    <event-date-time>20260625:070000</event-date-time>
-                    <event-description>Item successfully delivered</event-description>
-                    <attempted-date>2026-12-24</attempted-date>
-                    <event-type>DELIVERED</event-type>
-                    <event-location>Headquarters</event-location>
-                </pin-summary>
-            </tracking-summary>
-        EOF;
+        $xml = FixtureFile::load('DevProgram/get-tracking-summary.xml');
 
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
@@ -109,7 +91,7 @@ class TrackingClientTest extends TestCase
         self::assertSame('Item successfully delivered', $pinSummary->eventDescription);
         self::assertSame('2026-12-24', $pinSummary->attemptedDate->format('Y-m-d'));
         self::assertSame('DELIVERED', $pinSummary->eventType);
-        self::assertSame('Headquarters', $pinSummary->eventLocation);
+        self::assertSame('OTTAWA,ON', $pinSummary->eventLocation);
     }
 
     public function testPartialDateTimeBecomesMidnight(): void
@@ -264,7 +246,7 @@ class TrackingClientTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/tracking-summary-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-tracking-summary.xml')),
         ]);
 
         $this->tracking($handlerStack)->getSummary($pin);

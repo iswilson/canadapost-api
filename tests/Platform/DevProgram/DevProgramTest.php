@@ -9,6 +9,7 @@ use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -81,7 +82,7 @@ final class DevProgramTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $platform = new DevProgram(' username ', ' password ', '123456789', null, true, handler: $handlerStack);
@@ -94,7 +95,7 @@ final class DevProgramTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $platform = new DevProgram('username', 'password', ' 123456789 ', ' 987654321 ', true, handler: $handlerStack);
@@ -111,7 +112,7 @@ final class DevProgramTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $platform = new DevProgram('username', 'password', '123456789', $contractId, true, handler: $handlerStack);
@@ -136,7 +137,7 @@ final class DevProgramTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $platform = new DevProgram('username', 'password', '123456789', null, true, handler: $handlerStack);
@@ -149,7 +150,7 @@ final class DevProgramTest extends TestCase
     {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], file_get_contents(__DIR__ . '/../../Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         $platform = new DevProgram('username', 'password', '123456789', null, false, handler: $handlerStack);

@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\CanadaPost;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
+use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -23,7 +24,7 @@ final class CanadaPostTest extends TestCase
     {
         $history = [];
         $handlerStack = $this->handlerStack($history, [
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         CanadaPost::devProgram('username', 'password', '123456789', handler: $handlerStack)
@@ -42,7 +43,7 @@ final class CanadaPostTest extends TestCase
     {
         $history = [];
         $handlerStack = $this->handlerStack($history, [
-            new Response(200, [], file_get_contents(__DIR__ . '/Mocks/rating-response-success.xml')),
+            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
         ]);
 
         CanadaPost::devProgram('username', 'password', '123456789', timeout: 5, handler: $handlerStack)
