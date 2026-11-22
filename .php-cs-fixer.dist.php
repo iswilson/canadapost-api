@@ -23,5 +23,10 @@ return (new Config())
             'property' => 'single',
             'method' => 'multi',
         ],
+        'global_namespace_import' => [
+            'import_classes' => false,
+            'import_constants' => false,
+            'import_functions' => false,
+        ],
     ])
     ->setFinder(Finder::create()->in(__DIR__)->exclude('vendor'));

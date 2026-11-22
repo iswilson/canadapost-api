@@ -54,7 +54,7 @@ final readonly class RedactingMessageFormatter implements MessageFormatterInterf
             if ($request->hasHeader($header)) {
                 $request = $request->withHeader($header, self::REDACTED_MESSAGE);
             }
-            if ($response?->hasHeader($header)) {
+            if ($response !== null && $response->hasHeader($header)) {
                 $response = $response->withHeader($header, self::REDACTED_MESSAGE);
             }
         }

@@ -93,6 +93,10 @@ final readonly class Parcel
 
     /**
      * Report whether this parcel has dimensions set.
+     *
+     * @phpstan-assert-if-true !null $this->lengthMm
+     * @phpstan-assert-if-true !null $this->widthMm
+     * @phpstan-assert-if-true !null $this->heightMm
      */
     public function hasDimensions(): bool
     {

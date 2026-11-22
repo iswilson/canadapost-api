@@ -77,23 +77,23 @@ class RedactingMessageFormatterTest extends TestCase
     }
 
     #[DataProvider('getSensitiveRatingFields')]
-    public function testRatingRequestFieldsAreRedactedFromLog(string $fieldName, Destination $destination): void
+    public function testRatingRequestFieldsAreRedactedFromLog(string $fieldName, string $countryCode, string $postalCode): void
     {
         $spyLogger = new SpyLogger();
-        $this->getSentRatingRequest($spyLogger, $destination);
+        $this->getSentRatingRequest($spyLogger, new Destination($countryCode, $postalCode));
         self::assertStringContainsString(sprintf('<%s>[REDACTED]</%s>', $fieldName, $fieldName), $spyLogger->records[0]['message']);
-        self::assertStringNotContainsString($destination->postalCode, $spyLogger->records[0]['message']);
+        self::assertStringNotContainsString($postalCode, $spyLogger->records[0]['message']);
     }
 
     /**
-     * @return iterable<string, array{string, Destination}>
+     * @return iterable<string, array{string, string, string}>
      */
     public static function getSensitiveRatingFields(): iterable
     {
-        yield 'Postal code' => ['postal-code', new Destination('CA', 'H0H0H0')];
-        yield 'Zip code 5' => ['zip-code', new Destination('US', '98765')];
-        yield 'Zip code 5-4' => ['zip-code', new Destination('US', '98765-4321')];
-        yield 'International postal code' => ['postal-code', new Destination('AQ', 'A1B2-C3D4')];
+        yield 'Postal code' => ['postal-code', 'CA', 'H0H0H0'];
+        yield 'Zip code 5' => ['zip-code', 'US', '98765'];
+        yield 'Zip code 5-4' => ['zip-code', 'US', '98765-4321'];
+        yield 'International postal code' => ['postal-code', 'AQ', 'A1B2-C3D4'];
     }
 
     #[DataProvider('getSensitiveTrackingFields')]

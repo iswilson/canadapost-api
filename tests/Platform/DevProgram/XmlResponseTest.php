@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
+use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -91,7 +92,7 @@ class XmlResponseTest extends TestCase
     public function testKnownXmlRootElement(): void
     {
         $doc = $this->xmlResponseToDOMDocument('<test></test>');
-        self::assertSame('test', $doc->documentElement->localName);
+        self::assertSame('test', $doc->documentElement?->localName);
     }
 
     public function testUnknownXmlRootElement(): void
@@ -128,16 +129,16 @@ class XmlResponseTest extends TestCase
 
     public function testExtractedTextIsTrimmed(): void
     {
-        $doc = XmlResponse::load(<<<'EOF'
+        $element = XmlFixture::loadFirstElement(<<<'EOF'
             <tracking-summary>
                 <pin-summary>
                     <origin-postal-id>  ON   </origin-postal-id>
                 </pin-summary>
             </tracking-summary>
-        EOF);
+        EOF, 'pin-summary');
 
         $text = XmlResponse::extractText(
-            $doc->getElementsByTagName('pin-summary')->item(0),
+            $element,
             'origin-postal-id',
         );
         self::assertSame('ON', $text);
@@ -145,16 +146,16 @@ class XmlResponseTest extends TestCase
 
     public function testEmptyElement(): void
     {
-        $doc = XmlResponse::load(<<<'EOF'
+        $element = XmlFixture::loadFirstElement(<<<'EOF'
             <tracking-summary>
                 <pin-summary>
                     <origin-postal-id></origin-postal-id>
                 </pin-summary>
             </tracking-summary>
-        EOF);
+        EOF, 'pin-summary');
 
         $text = XmlResponse::extractText(
-            $doc->getElementsByTagName('pin-summary')->item(0),
+            $element,
             'origin-postal-id',
         );
         self::assertNull($text);
@@ -162,16 +163,16 @@ class XmlResponseTest extends TestCase
 
     public function testMissingElement(): void
     {
-        $doc = XmlResponse::load(<<<'EOF'
+        $element = XmlFixture::loadFirstElement(<<<'EOF'
             <tracking-summary>
                 <pin-summary>
                     <origin-postal-id></origin-postal-id>
                 </pin-summary>
             </tracking-summary>
-        EOF);
+        EOF, 'pin-summary');
 
         $text = XmlResponse::extractText(
-            $doc->getElementsByTagName('pin-summary')->item(0),
+            $element,
             'destination-postal-id',
         );
         self::assertNull($text);
@@ -179,54 +180,51 @@ class XmlResponseTest extends TestCase
 
     public function testMalformedDate(): void
     {
-        $doc = XmlResponse::load(<<<'EOF'
+        $element = XmlFixture::loadFirstElement(<<<'EOF'
             <tracking-summary>
                 <pin-summary>
                     <mailed-on-date>not a date</mailed-on-date>
                 </pin-summary>
             </tracking-summary>
-        EOF);
-        self::assertInstanceOf(\DOMDocument::class, $doc);
+        EOF, 'pin-summary');
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('malformed date');
         XmlResponse::extractDateTime(
-            $doc->getElementsByTagName('pin-summary')->item(0),
+            $element,
             'mailed-on-date',
         );
     }
 
     public function testInvalidDate(): void
     {
-        $doc = XmlResponse::load(<<<'EOF'
+        $element = XmlFixture::loadFirstElement(<<<'EOF'
             <tracking-summary>
                 <pin-summary>
                     <mailed-on-date>2026-02-30</mailed-on-date>
                 </pin-summary>
             </tracking-summary>
-        EOF);
-        self::assertInstanceOf(\DOMDocument::class, $doc);
+        EOF, 'pin-summary');
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('invalid date');
         XmlResponse::extractDateTime(
-            $doc->getElementsByTagName('pin-summary')->item(0),
+            $element,
             'mailed-on-date',
         );
     }
 
     public function testInvalidDateTime(): void
     {
-        $doc = XmlResponse::load(<<<'EOF'
+        $element = XmlFixture::loadFirstElement(<<<'EOF'
             <tracking-summary>
                 <pin-summary>
                     <event-date-time>2026-02-01:999999</event-date-time>
                 </pin-summary>
             </tracking-summary>
-        EOF);
-        self::assertInstanceOf(\DOMDocument::class, $doc);
+        EOF, 'pin-summary');
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('invalid date');
         XmlResponse::extractDateTime(
-            $doc->getElementsByTagName('pin-summary')->item(0),
+            $element,
             'event-date-time',
             '!Y-m-d:His',
         );
@@ -235,10 +233,9 @@ class XmlResponseTest extends TestCase
     #[DataProvider('getValidISODateTimes')]
     public function testValidISODateTime(string $dateTime, \DateTimeImmutable $expectedDateTime): void
     {
-        $element = XmlResponse::load("<test-wrapper><test>{$dateTime}</test></test-wrapper>")
-            ->getElementsByTagName('test-wrapper')->item(0);
-        self::assertInstanceOf(\DOMElement::class, $element);
+        $element = XmlFixture::loadFirstElement("<test-wrapper><test>{$dateTime}</test></test-wrapper>", 'test-wrapper');
         $result = XmlResponse::extractIsoDateTime($element, 'test');
+        self::assertInstanceOf(\DateTimeImmutable::class, $result);
         self::assertSame($expectedDateTime->format(\DateTimeInterface::ATOM), $result->format(\DateTimeInterface::ATOM));
     }
 
@@ -256,27 +253,21 @@ class XmlResponseTest extends TestCase
 
     public function testISODateTimeElementMissing(): void
     {
-        $element = XmlResponse::load("<test-wrapper></test-wrapper>")
-            ->getElementsByTagName('test-wrapper')->item(0);
-        self::assertInstanceOf(\DOMElement::class, $element);
+        $element = XmlFixture::loadFirstElement("<test-wrapper></test-wrapper>", 'test-wrapper');
         $result = XmlResponse::extractIsoDateTime($element, 'test');
         self::assertNull($result);
     }
 
     public function testISODateTimeElementEmpty(): void
     {
-        $element = XmlResponse::load("<test-wrapper><test></test></test-wrapper>")
-            ->getElementsByTagName('test-wrapper')->item(0);
-        self::assertInstanceOf(\DOMElement::class, $element);
+        $element = XmlFixture::loadFirstElement("<test-wrapper><test></test></test-wrapper>", 'test-wrapper');
         $result = XmlResponse::extractIsoDateTime($element, 'test');
         self::assertNull($result);
     }
 
     public function testMalformedISODateTime(): void
     {
-        $element = XmlResponse::load("<test-wrapper><test>not a date</test></test-wrapper>")
-            ->getElementsByTagName('test-wrapper')->item(0);
-        self::assertInstanceOf(\DOMElement::class, $element);
+        $element = XmlFixture::loadFirstElement("<test-wrapper><test>not a date</test></test-wrapper>", 'test-wrapper');
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('malformed date');
         XmlResponse::extractIsoDateTime($element, 'test');
@@ -284,9 +275,7 @@ class XmlResponseTest extends TestCase
 
     public function testInvalidISODateTime(): void
     {
-        $element = XmlResponse::load("<test-wrapper><test>2026-02-30T20:00:00+05:00</test></test-wrapper>")
-            ->getElementsByTagName('test-wrapper')->item(0);
-        self::assertInstanceOf(\DOMElement::class, $element);
+        $element = XmlFixture::loadFirstElement("<test-wrapper><test>2026-02-30T20:00:00+05:00</test></test-wrapper>", 'test-wrapper');
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage('invalid date');
         XmlResponse::extractIsoDateTime($element, 'test');

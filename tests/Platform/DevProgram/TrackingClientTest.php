@@ -12,6 +12,7 @@ use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
+use iswilson\CanadaPost\Tracking\DeliveryOptionCompleted;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -84,13 +85,13 @@ class TrackingClientTest extends TestCase
         self::assertSame('K1A', $pinSummary->destinationPostalId);
         self::assertSame('ON', $pinSummary->destinationProvince);
         self::assertSame('Xpresspost', $pinSummary->serviceName);
-        self::assertSame('2026-12-22', $pinSummary->mailedOnDate->format('Y-m-d'));
-        self::assertSame('2026-12-23', $pinSummary->expectedDeliveryDate->format('Y-m-d'));
-        self::assertSame('2026-12-25', $pinSummary->actualDeliveryDate->format('Y-m-d'));
-        self::assertSame('1', $pinSummary->deliveryOptionCompletedInd->value);
-        self::assertSame('20260625:070000', $pinSummary->eventDateTime->format('Ymd:His'));
+        self::assertSame('2026-12-22', $pinSummary->mailedOnDate?->format('Y-m-d'));
+        self::assertSame('2026-12-23', $pinSummary->expectedDeliveryDate?->format('Y-m-d'));
+        self::assertSame('2026-12-25', $pinSummary->actualDeliveryDate?->format('Y-m-d'));
+        self::assertSame(DeliveryOptionCompleted::Satisfied, $pinSummary->deliveryOptionCompletedInd);
+        self::assertSame('20260625:070000', $pinSummary->eventDateTime?->format('Ymd:His'));
         self::assertSame('Item successfully delivered', $pinSummary->eventDescription);
-        self::assertSame('2026-12-24', $pinSummary->attemptedDate->format('Y-m-d'));
+        self::assertSame('2026-12-24', $pinSummary->attemptedDate?->format('Y-m-d'));
         self::assertSame('DELIVERED', $pinSummary->eventType);
         self::assertSame('OTTAWA,ON', $pinSummary->eventLocation);
     }
@@ -104,7 +105,7 @@ class TrackingClientTest extends TestCase
         ]);
 
         $pinSummary = $this->tracking($handlerStack)->getSummary('ABCDEF1234567890');
-        self::assertSame('2026-01-01 00:00:00', $pinSummary->mailedOnDate->format('Y-m-d H:i:s'));
+        self::assertSame('2026-01-01 00:00:00', $pinSummary->mailedOnDate?->format('Y-m-d H:i:s'));
     }
 
     public function testEmptySummaryFields(): void

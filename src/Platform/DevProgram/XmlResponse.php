@@ -52,11 +52,11 @@ final class XmlResponse
         }
 
         // Response is valid XML but doesn't contain the expected root element.
-        if ($doc->documentElement?->localName !== $expectedRootElement) {
+        if ($doc->documentElement === null || $doc->documentElement->localName !== $expectedRootElement) {
             throw new CanadaPostException(
                 vsprintf('Canada Post API returned valid XML but required elements are missing, expected %s, got %s.', [
                     $expectedRootElement,
-                    $doc->documentElement->localName,
+                    $doc->documentElement->localName ?? 'no root element',
                 ]),
                 httpStatusCode: $response->getStatusCode(),
             );
@@ -155,7 +155,8 @@ final class XmlResponse
         }
 
         // Cut anything smaller than a second.
-        $text = preg_replace('/(T\d{2}:\d{2}:\d{2})([\d.]?)+/', '$1', $text);
+        $text = preg_replace('/(T\d{2}:\d{2}:\d{2})([\d.]?)+/', '$1', $text)
+            ?? throw new CanadaPostException('Canada Post API returned a malformed date.');
 
         $date = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $text);
         if ($date === false) {

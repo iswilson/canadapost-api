@@ -16,7 +16,7 @@ final class XmlFixture
     {
         $doc = self::load($xml);
 
-        $doc->getElementsByTagName($elementName)->item(0)->textContent = '';
+        self::findFirst($doc, $elementName)->textContent = '';
         $xml = $doc->saveXML();
         if ($xml === false) {
             throw new \LogicException('Failed to build XML from DOMDocument.');
@@ -32,7 +32,7 @@ final class XmlFixture
     {
         $doc = self::load($xml);
 
-        $doc->getElementsByTagName($elementName)->item(0)->remove();
+        self::findFirst($doc, $elementName)->remove();
         $xml = $doc->saveXML();
         if ($xml === false) {
             throw new \LogicException('Failed to build XML from DOMDocument.');
@@ -48,13 +48,21 @@ final class XmlFixture
     {
         $doc = self::load($xml);
 
-        $doc->getElementsByTagName($elementName)->item(0)->textContent = $replacement;
+        self::findFirst($doc, $elementName)->textContent = $replacement;
         $xml = $doc->saveXML();
         if ($xml === false) {
             throw new \LogicException('Failed to build XML from DOMDocument.');
         }
 
         return $xml;
+    }
+
+    /**
+     * Return first instance of element in provided XML.
+     */
+    public static function loadFirstElement(string $xml, string $elementName): \DOMElement
+    {
+        return self::findFirst(self::load($xml), $elementName);
     }
 
     /**
@@ -74,5 +82,14 @@ final class XmlFixture
         }
 
         return $doc;
+    }
+
+    /**
+     * Return first instance of specified element.
+     */
+    private static function findFirst(\DOMDocument $doc, string $elementName): \DOMElement
+    {
+        return $doc->getElementsByTagName($elementName)->item(0)
+            ?? throw new \InvalidArgumentException(sprintf('Could not find element in provided XML: %s.', $elementName));
     }
 }
