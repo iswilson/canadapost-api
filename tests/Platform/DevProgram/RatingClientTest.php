@@ -16,6 +16,7 @@ use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
 use iswilson\CanadaPost\Rating\ShipmentOption;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
+use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -151,175 +152,34 @@ class RatingClientTest extends TestCase
         }
     }
 
-    public function testResponseMissingServiceCode(): void
+    #[DataProvider('getMissingOrEmptyFields')]
+    public function testResponseWithMissingOrEmptyFields(string $xml, string $expectedExceptionMessage): void
     {
         $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('service code');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-name>Expedited Parcel</service-name>
-                    <price-details>
-                        <due>10.00</due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst>0.00</pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        $this->getRatingResponse($xml);
     }
 
-    public function testResponseEmptyServiceCode(): void
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function getMissingOrEmptyFields(): iterable
     {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('service code');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code></service-code>
-                    <service-name>Expedited Parcel</service-name>
-                    <price-details>
-                        <due>10.00</due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst>0.00</pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
-    }
-
-    public function testResponseMissingServiceName(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('service name');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code>DOM.EP</service-code>
-                    <price-details>
-                        <due>10.00</due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst>0.00</pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
-    }
-
-    public function testResponseEmptyServiceName(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('service name');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code>DOM.EP</service-code>
-                    <service-name></service-name>
-                    <price-details>
-                        <due>10.00</due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst>0.00</pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
-    }
-
-    public function testResponseMissingTotalDue(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('dollar amount');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code>DOM.EP</service-code>
-                    <service-name>Expedited Parcel</service-name>
-                    <price-details>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst>0.00</pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
-    }
-
-    public function testResponseEmptyTotalDue(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('dollar amount');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code>DOM.EP</service-code>
-                    <service-name>Expedited Parcel</service-name>
-                    <price-details>
-                        <due></due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst>0.00</pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
+        $xml = FixtureFile::load('DevProgram/get-rates.xml');
+        yield 'Missing service code' => [XmlFixture::withoutElement($xml, 'service-code'), 'service code'];
+        yield 'Empty service code' => [XmlFixture::withEmptyElement($xml, 'service-code'), 'service code'];
+        yield 'Missing service name' => [XmlFixture::withoutElement($xml, 'service-name'), 'service name'];
+        yield 'Empty service name' => [XmlFixture::withEmptyElement($xml, 'service-name'), 'service name'];
+        yield 'Missing total due' => [XmlFixture::withoutElement($xml, 'due'), 'dollar amount'];
+        yield 'Empty total due' => [XmlFixture::withEmptyElement($xml, 'due'), 'dollar amount'];
+        yield 'Empty tax' => [XmlFixture::withEmptyElement($xml, 'pst'), 'dollar amount'];
     }
 
     public function testResponseMissingTax(): void
     {
-        $response = $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code>DOM.EP</service-code>
-                    <service-name>Expedited Parcel</service-name>
-                    <price-details>
-                        <due>10.00</due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
-        self::assertSame(0, $response[0]->pstCents);
-    }
-
-    public function testResponseEmptyTax(): void
-    {
-        $this->expectException(CanadaPostException::class);
-        $this->expectExceptionMessage('dollar amount');
-        $this->getRatingResponse(<<<'EOF'
-            <price-quotes>
-                <price-quote>
-                    <service-code>DOM.EP</service-code>
-                    <service-name>Expedited Parcel</service-name>
-                    <price-details>
-                        <due>10.00</due>
-                        <taxes>
-                            <gst>0.00</gst>
-                            <pst></pst>
-                            <hst>0.00</hst>
-                        </taxes>
-                    </price-details>
-                </price-quote>
-            </price-quotes>
-        EOF);
+        $xml = FixtureFile::load('DevProgram/get-rates.xml');
+        $response = $this->getRatingResponse(XmlFixture::withoutElement($xml, 'hst'));
+        self::assertSame(0, $response[0]->hstCents);
     }
 
     #[DataProvider('getDestinations')]

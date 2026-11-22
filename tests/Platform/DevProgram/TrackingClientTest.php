@@ -10,6 +10,7 @@ use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\TrackingClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
+use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -96,22 +97,14 @@ class TrackingClientTest extends TestCase
 
     public function testPartialDateTimeBecomesMidnight(): void
     {
-        $xml = <<<'EOF'
-            <tracking-summary>
-                <pin-summary>
-                    <pin>ABCDEF1234567890</pin>
-                    <mailed-on-date>2026-12-22</mailed-on-date>
-                </pin-summary>
-            </tracking-summary>
-        EOF;
-
+        $xml = FixtureFile::load('DevProgram/get-tracking-summary.xml');
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], $xml),
+            new Response(200, [], XmlFixture::withElementText($xml, 'mailed-on-date', '2026-01-01')),
         ]);
 
         $pinSummary = $this->tracking($handlerStack)->getSummary('ABCDEF1234567890');
-        self::assertSame('2026-12-22 00:00:00', $pinSummary->mailedOnDate->format('Y-m-d H:i:s'));
+        self::assertSame('2026-01-01 00:00:00', $pinSummary->mailedOnDate->format('Y-m-d H:i:s'));
     }
 
     public function testEmptySummaryFields(): void
@@ -178,16 +171,11 @@ class TrackingClientTest extends TestCase
 
     public function testMissingPin(): void
     {
-        $xml = <<<'EOF'
-            <tracking-summary>
-                <pin-summary>
-                </pin-summary>
-            </tracking-summary>
-        EOF;
+        $xml = FixtureFile::load('DevProgram/get-tracking-summary.xml');
 
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], $xml),
+            new Response(200, [], XmlFixture::withoutElement($xml, 'pin')),
         ]);
 
         $this->expectException(CanadaPostException::class);
@@ -197,17 +185,11 @@ class TrackingClientTest extends TestCase
 
     public function testEmptyPin(): void
     {
-        $xml = <<<'EOF'
-            <tracking-summary>
-                <pin-summary>
-                  <pin></pin>
-                </pin-summary>
-            </tracking-summary>
-        EOF;
+        $xml = FixtureFile::load('DevProgram/get-tracking-summary.xml');
 
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], $xml),
+            new Response(200, [], XmlFixture::withEmptyElement($xml, 'pin')),
         ]);
 
         $this->expectException(CanadaPostException::class);
@@ -217,18 +199,11 @@ class TrackingClientTest extends TestCase
 
     public function testInvalidDeliveryOptionCompletedValue(): void
     {
-        $xml = <<<'EOF'
-            <tracking-summary>
-                <pin-summary>
-                    <pin>ABCDEF1234567890</pin>
-                    <delivery-option-completed-ind>3</delivery-option-completed-ind>
-                </pin-summary>
-            </tracking-summary>
-        EOF;
+        $xml = FixtureFile::load('DevProgram/get-tracking-summary.xml');
 
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], $xml),
+            new Response(200, [], XmlFixture::withElementText($xml, 'delivery-option-completed-ind', '3')),
         ]);
 
         $pinSummary = $this->tracking($handlerStack)->getSummary('ABCDEF1234567890');

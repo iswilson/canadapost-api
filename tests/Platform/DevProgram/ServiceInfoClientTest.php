@@ -8,8 +8,8 @@ use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Platform\DevProgram\ServiceInfoClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
-use iswilson\CanadaPost\Platform\DevProgram\XmlResponse;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
+use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -77,12 +77,12 @@ class ServiceInfoClientTest extends TestCase
     public static function missingOrEmptyFields(): iterable
     {
         $xml = FixtureFile::load('DevProgram/get-service-info.xml');
-        yield 'Empty message text' => [self::emptyField($xml, 'message-text'), 'empty info message'];
-        yield 'Empty start date' => [self::emptyField($xml, 'from-datetime'), 'empty start date and time'];
-        yield 'Empty end date' => [self::emptyField($xml, 'to-datetime'), 'empty end date and time'];
-        yield 'Missing message text' => [self::removeField($xml, 'message-text'), 'empty info message'];
-        yield 'Missing start date' => [self::removeField($xml, 'from-datetime'), 'empty start date and time'];
-        yield 'Missing end date' => [self::removeField($xml, 'to-datetime'), 'empty end date and time'];
+        yield 'Empty message text' => [XmlFixture::withEmptyElement($xml, 'message-text'), 'empty info message'];
+        yield 'Empty start date' => [XmlFixture::withEmptyElement($xml, 'from-datetime'), 'empty start date and time'];
+        yield 'Empty end date' => [XmlFixture::withEmptyElement($xml, 'to-datetime'), 'empty end date and time'];
+        yield 'Missing message text' => [XmlFixture::withoutElement($xml, 'message-text'), 'empty info message'];
+        yield 'Missing start date' => [XmlFixture::withoutElement($xml, 'from-datetime'), 'empty start date and time'];
+        yield 'Missing end date' => [XmlFixture::withoutElement($xml, 'to-datetime'), 'empty end date and time'];
     }
 
     public function testFailedResponse(): void
@@ -126,19 +126,5 @@ class ServiceInfoClientTest extends TestCase
         $historyContainer[0]['result'] = $response;
 
         return $historyContainer[0];
-    }
-
-    private static function emptyField(string $xml, string $elementName): string
-    {
-        $doc = XmlResponse::load($xml);
-        $doc->getElementsByTagName($elementName)->item(0)->textContent = '';
-        return $doc->saveXML();
-    }
-
-    private static function removeField(string $xml, string $elementName): string
-    {
-        $doc = XmlResponse::load($xml);
-        $doc->getElementsByTagName($elementName)->item(0)->remove();
-        return $doc->saveXML();
     }
 }
