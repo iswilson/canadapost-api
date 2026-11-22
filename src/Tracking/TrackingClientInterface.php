@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Tracking;
 
+use iswilson\CanadaPost\Exception\CanadaPostException;
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
+
 /**
  * Tracking services for a Canada Post platform.
  *
@@ -22,11 +25,11 @@ interface TrackingClientInterface
      * @param string $pin
      *   Parcel Identification Number (PIN)
      *
-     * @return \iswilson\CanadaPost\Tracking\PinSummary
+     * @return PinSummary
      *   Canada Post tracking summary.
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws CanadaPostException
+     * @throws InvalidArgumentException
      */
     public function getSummary(string $pin): PinSummary;
 }

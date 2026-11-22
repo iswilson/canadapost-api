@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost;
 
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
 use Psr\Log\LoggerInterface;
 
@@ -27,16 +28,16 @@ final class CanadaPost
      *   Optional contract ID for commercial customers.
      * @param bool $sandbox
      *   Platform environment, default to sandbox/development.
-     * @param \Psr\Log\LoggerInterface|null $logger
+     * @param LoggerInterface|null $logger
      *   Optional logging interface.
      * @param float|null $timeout
      *   Total timeout of the request in seconds (default 30).
      * @param callable|null $handler
      *   Internal: Optional Guzzle handler for tests.
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      *
-     * @return \iswilson\CanadaPost\Platform\DevProgram\DevProgram
+     * @return DevProgram
      */
     public static function devProgram(
         string $username,

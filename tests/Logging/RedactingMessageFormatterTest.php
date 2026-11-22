@@ -126,9 +126,6 @@ class RedactingMessageFormatterTest extends TestCase
         self::assertStringContainsString('<country-code>AQ</country-code>', $spyLogger->records[0]['message']);
     }
 
-    /**
-     * @return \Psr\Http\Message\RequestInterface
-     */
     private function getSentRatingRequest(LoggerInterface $logger, ?Destination $destination = null): RequestInterface
     {
         $historyContainer = [];
@@ -143,9 +140,6 @@ class RedactingMessageFormatterTest extends TestCase
         return $historyContainer[0]['request'];
     }
 
-    /**
-     * @return \Psr\Http\Message\RequestInterface
-     */
     private function getSentTrackingRequest(LoggerInterface $logger): RequestInterface
     {
         $historyContainer = [];

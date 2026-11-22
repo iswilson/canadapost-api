@@ -78,7 +78,7 @@ final readonly class ShipmentOption
      *
      * @return list<ShipmentOption>
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public static function unique(array $options): array
     {

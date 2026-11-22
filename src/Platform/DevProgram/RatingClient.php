@@ -217,7 +217,7 @@ final readonly class RatingClient implements RatingClientInterface
      *
      * @return list<PriceQuote>
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      */
     public static function parsePriceQuotes(\DOMDocument $doc): array
     {
@@ -323,7 +323,7 @@ final readonly class RatingClient implements RatingClientInterface
      *
      * @internal
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public static function formatDecimal(int $value, int $decimalPlaces): string
     {
@@ -346,7 +346,7 @@ final readonly class RatingClient implements RatingClientInterface
      *
      * @internal
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      */
     public static function convertDollarsToCents(string $value): int
     {

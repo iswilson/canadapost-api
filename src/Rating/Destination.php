@@ -18,7 +18,7 @@ final readonly class Destination
     public ?string $postalCode;
 
     /**
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function __construct(string $countryCode, ?string $postalCode = null)
     {
@@ -43,7 +43,7 @@ final readonly class Destination
     /**
      * Normalize ISO 3166-1 alpha-2 country code.
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     private static function normalizeCountryCode(string $countryCode): string
     {
@@ -61,7 +61,7 @@ final readonly class Destination
     /**
      * Normalize and validate Canadian postal code.
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public static function normalizeCanadianPostalCode(string $postalCode): string
     {
@@ -79,7 +79,7 @@ final readonly class Destination
     /**
      * Normalize and validate US zip code.
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     private static function normalizeZipCode(string $zipCode): string
     {

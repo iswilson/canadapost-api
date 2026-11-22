@@ -28,5 +28,8 @@ return (new Config())
             'import_constants' => false,
             'import_functions' => false,
         ],
+        'fully_qualified_strict_types' => [
+            'import_symbols' => true,
+        ],
     ])
     ->setFinder(Finder::create()->in(__DIR__)->exclude('vendor'));

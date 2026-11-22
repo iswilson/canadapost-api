@@ -44,7 +44,7 @@ final readonly class TrackingClient implements TrackingClientInterface
      *
      * @return list<PinSummary>
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      */
     private static function parseTrackingSummary(\DOMDocument $doc): array
     {

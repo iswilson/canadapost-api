@@ -17,7 +17,7 @@ final class XmlResponse
     /**
      * Turn an API response into a DOMDocument (or throw exceptions trying).
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      */
     public static function toDOMDocument(ResponseInterface $response, string $expectedRootElement): \DOMDocument
     {
@@ -115,7 +115,7 @@ final class XmlResponse
      * @return \DateTimeImmutable|null
      *   Returns null if element is empty or missing.
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      *   On invalid or malformed date.
      */
     public static function extractDateTime(\DOMElement $element, string $qualifiedName, string $format = '!Y-m-d'): ?\DateTimeImmutable
@@ -144,7 +144,7 @@ final class XmlResponse
      * @return \DateTimeImmutable|null
      *   Returns null if element is empty or missing.
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      *   On invalid or malformed date.
      */
     public static function extractIsoDateTime(\DOMElement $element, string $qualifiedName): ?\DateTimeImmutable

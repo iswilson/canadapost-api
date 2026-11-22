@@ -22,7 +22,7 @@ use Psr\Log\LogLevel;
 final readonly class Transport
 {
     public const float DEFAULT_TIMEOUT = 30;
-    /** @see \GuzzleHttp\MessageFormatter for variable substitutions. */
+    /** @see MessageFormatter for variable substitutions. */
     private const string LOG_FORMAT = MessageFormatter::DEBUG;
     private ClientInterface $client;
 

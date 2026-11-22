@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Rating;
 
+use iswilson\CanadaPost\Exception\CanadaPostException;
+use iswilson\CanadaPost\Exception\InvalidArgumentException;
+
 /**
  * Rating services for a Canada Post platform.
  *
@@ -32,8 +35,8 @@ interface RatingClientInterface
      *
      * @return list<PriceQuote>
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws CanadaPostException
+     * @throws InvalidArgumentException
      */
     public function getRates(
         string $originPostalCode,

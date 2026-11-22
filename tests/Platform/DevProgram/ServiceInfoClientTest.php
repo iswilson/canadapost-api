@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Platform\DevProgram\ServiceInfoClient;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
+use iswilson\CanadaPost\ServiceInfo\InfoMessage;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
@@ -15,6 +16,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Service Info Class Tests.
@@ -107,11 +110,11 @@ class ServiceInfoClientTest extends TestCase
 
     /**
      * @return array{
-     *     request: \Psr\Http\Message\RequestInterface,
-     *     response: \Psr\Http\Message\ResponseInterface|null,
+     *     request: RequestInterface,
+     *     response: ResponseInterface|null,
      *     error: mixed,
      *     options: array<string, mixed>,
-     *     result: list<\iswilson\CanadaPost\ServiceInfo\InfoMessage>,
+     *     result: list<InfoMessage>,
      * }
      */
     private function getServiceInfoTransaction(string $xml, int $statusCode = 200): array

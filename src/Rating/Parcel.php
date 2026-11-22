@@ -30,7 +30,7 @@ final readonly class Parcel
     public ?int $heightMm;
 
     /**
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function __construct(
         int $weightGrams,

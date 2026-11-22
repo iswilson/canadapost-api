@@ -29,7 +29,7 @@ final readonly class DevProgram
     /**
      * @internal Use CanadaPost::devProgram().
      *
-     * @throws \iswilson\CanadaPost\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function __construct(
         /** Developer Program API user ID. */

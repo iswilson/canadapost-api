@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\ServiceInfo;
 
+use iswilson\CanadaPost\Exception\CanadaPostException;
+
 /**
  * Service Info for a Canada Post platform.
  *
@@ -21,7 +23,7 @@ interface ServiceInfoClientInterface
      *
      * @return list<InfoMessage>
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      */
     public function getServiceInfo(): array;
 }

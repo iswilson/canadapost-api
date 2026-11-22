@@ -36,7 +36,7 @@ final readonly class ServiceInfoClient implements ServiceInfoClientInterface
      *
      * @return list<InfoMessage>
      *
-     * @throws \iswilson\CanadaPost\Exception\CanadaPostException
+     * @throws CanadaPostException
      */
     private static function parseInfoMessages(\DOMDocument $doc): array
     {

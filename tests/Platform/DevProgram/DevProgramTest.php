@@ -161,7 +161,6 @@ final class DevProgramTest extends TestCase
     }
 
     /**
-     * @param \iswilson\CanadaPost\Platform\DevProgram\DevProgram $platform
      * @param list<array{
      *     request: RequestInterface,
      *     response: ResponseInterface|null,
@@ -169,8 +168,6 @@ final class DevProgramTest extends TestCase
      *     options: array<string, mixed>,
      * }> $historyContainer
      *   Passed by reference, filled by getRates().
-     *
-     * @return \Psr\Http\Message\RequestInterface
      */
     private function getSentRequest(DevProgram $platform, array &$historyContainer): RequestInterface
     {
