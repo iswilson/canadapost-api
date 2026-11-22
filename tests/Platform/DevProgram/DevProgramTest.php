@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 #[CoversClass(DevProgram::class)]
 #[Group('DevProgram')]
@@ -161,7 +162,12 @@ final class DevProgramTest extends TestCase
 
     /**
      * @param \iswilson\CanadaPost\Platform\DevProgram\DevProgram $platform
-     * @param list<mixed> $historyContainer
+     * @param list<array{
+     *     request: RequestInterface,
+     *     response: ResponseInterface|null,
+     *     error: mixed,
+     *     options: array<string, mixed>,
+     * }> $historyContainer
      *   Passed by reference, filled by getRates().
      *
      * @return \Psr\Http\Message\RequestInterface

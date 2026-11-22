@@ -262,7 +262,7 @@ class TransportTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $guzzleOptions
+     * @param array{handler?: callable|null} $guzzleOptions
      */
     private function transport(
         string $baseUrl = 'https://localhost',
@@ -277,7 +277,7 @@ class TransportTest extends TestCase
 
     /**
      * @param array<string, list<string>|string> $headers
-     * @param array<string, mixed> $guzzleOptions
+     * @param array{handler?: callable|null} $guzzleOptions
      *
      * @return array{
      *     request: \Psr\Http\Message\RequestInterface,
