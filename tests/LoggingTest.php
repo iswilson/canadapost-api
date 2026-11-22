@@ -77,7 +77,10 @@ final class LoggingTest extends TestCase
             new Parcel(500),
         );
 
-        self::assertCount(2, $spyLogger->records);
+        $mock->append(new Response(200, [], FixtureFile::load('DevProgram/get-service-info.xml')));
+        $platform->serviceInfo()->getServiceInfo();
+
+        self::assertCount(3, $spyLogger->records);
     }
 
     /**

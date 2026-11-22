@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.6.0] - 2026-11-22
 
 ### Added
 - New interfaces (intended for testing and internal use) `Tracking\TrackingClientInterface`, `ServiceInfo\ServiceInfoClientInterface` and `Rating\RatingClientInterface`.
