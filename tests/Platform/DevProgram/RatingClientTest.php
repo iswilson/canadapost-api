@@ -187,6 +187,7 @@ class RatingClientTest extends TestCase
     {
         $request = $this->getSentRequestBody($destination, new Parcel(500));
         $sentXml = $request->saveXML($request->getElementsByTagName('destination')->item(0));
+        self::assertIsString($sentXml);
         self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
     }
 
@@ -217,6 +218,7 @@ class RatingClientTest extends TestCase
     {
         $request = $this->getSentRequestBody(new Destination('CA', 'H0H0H0'), new Parcel(500), ' h0h-0h0 ');
         $sentXml = $request->saveXML($request->getElementsByTagName('origin-postal-code')->item(0));
+        self::assertIsString($sentXml);
         self::assertXmlStringEqualsXmlString('<origin-postal-code>H0H0H0</origin-postal-code>', $sentXml);
     }
 
@@ -260,6 +262,7 @@ class RatingClientTest extends TestCase
     {
         $request = $this->getSentRequestBody(new Destination('CA', 'H0H0H0'), new Parcel($weightGrams, $lengthMm, $widthMm, $heightMm));
         $sentXml = $request->saveXML($request->getElementsByTagName('parcel-characteristics')->item(0));
+        self::assertIsString($sentXml);
         self::assertXmlStringEqualsXmlString($expectedXml, $sentXml);
     }
 

@@ -123,8 +123,9 @@ class ServiceInfoClientTest extends TestCase
 
         // Add key 'result' for response after it passed through send.
         $response = $this->serviceInfo($handlerStack)->getServiceInfo();
-        $historyContainer[0]['result'] = $response;
+        $firstTransaction = $historyContainer[0] ?? throw new \LogicException('No request sent.');
+        $firstTransaction['result'] = $response;
 
-        return $historyContainer[0];
+        return $firstTransaction;
     }
 }

@@ -203,7 +203,11 @@ final readonly class RatingClient implements RatingClientInterface
         // Children will go into this namespace as well.
         $root->setAttribute('xmlns', 'http://www.canadapost.ca/ws/ship/rate-v4');
 
-        return $doc->saveXML();
+        $xml = $doc->saveXML();
+        if ($xml === false) {
+            throw new \LogicException('Failed to build XML.');
+        }
+        return $xml;
     }
 
     /**
