@@ -20,8 +20,9 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 #[CoversClass(TrackingClient::class)]
+#[Group('DevProgram')]
 #[Group('Tracking')]
-class TrackingClientTest extends TestCase
+final class TrackingClientTest extends TestCase
 {
     use HttpMockHandlerTrait;
 

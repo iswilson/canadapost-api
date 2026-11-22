@@ -23,7 +23,7 @@ use Psr\Log\LoggerInterface;
 
 #[CoversClass(RedactingMessageFormatter::class)]
 #[Group('Logging')]
-class RedactingMessageFormatterTest extends TestCase
+final class RedactingMessageFormatterTest extends TestCase
 {
     use HttpMockHandlerTrait;
 

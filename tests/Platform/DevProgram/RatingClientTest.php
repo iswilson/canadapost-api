@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
@@ -19,20 +17,30 @@ use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-/**
- * Rating Class Tests.
- */
 #[CoversClass(RatingClient::class)]
-#[CoversMethod(RatingClient::class, 'getRates')]
+#[Group('DevProgram')]
 #[Group('Rating')]
-class RatingClientTest extends TestCase
+final class RatingClientTest extends TestCase
 {
     use HttpMockHandlerTrait;
+
+    public function testRequest(): void
+    {
+        $xml = FixtureFile::load('DevProgram/get-rates.xml');
+        $request = $this->getRatingTransaction($xml)['request'];
+
+        self::assertSame('POST', $request->getMethod());
+        self::assertSame('/rs/ship/price', $request->getUri()->getPath());
+        self::assertSame('application/vnd.cpc.ship.rate-v4+xml', $request->getHeaderLine('Content-Type'));
+        self::assertSame('application/vnd.cpc.ship.rate-v4+xml', $request->getHeaderLine('Accept'));
+        self::assertSame('en-CA', $request->getHeaderLine('Accept-Language'));
+    }
 
     public function testServiceCodesAreTrimmedAndCapitalized(): void
     {
@@ -136,7 +144,7 @@ class RatingClientTest extends TestCase
     public function testEmptyPriceQuotes(): void
     {
         $response = $this->getRatingResponse('<?xml version="1.0" encoding="UTF-8"?><price-quotes></price-quotes>');
-        self::assertEquals([], $response);
+        self::assertSame([], $response);
     }
 
     public function testResponseWithErrorMessages(): void
@@ -337,16 +345,7 @@ class RatingClientTest extends TestCase
      */
     private function getRatingResponse(string $xml, int $statusCode = 200): array
     {
-        $mock = new MockHandler([
-            new Response($statusCode, [], $xml),
-        ]);
-        $handlerStack = HandlerStack::create($mock);
-
-        return $this->rating($handlerStack)->getRates(
-            'H0H0H0',
-            new Destination('CA', 'H0H0H0'),
-            new Parcel(500),
-        );
+        return $this->getRatingTransaction($xml, $statusCode)['result'];
     }
 
     /**
@@ -354,17 +353,44 @@ class RatingClientTest extends TestCase
      */
     private function getSentRequestBody(Destination $destination, Parcel $parcel, string $originPostalCode = 'H0H0H0'): \DOMDocument
     {
+        $doc = new \DOMDocument();
+        $requestBody = $this->getRatingTransaction(
+            FixtureFile::load('DevProgram/get-rates.xml'),
+            200,
+            $originPostalCode,
+            $destination,
+            $parcel,
+        )['request']->getBody();
+        $doc->loadXML((string) $requestBody);
+        return $doc;
+    }
+
+    /**
+     * @return array{
+     *     request: RequestInterface,
+     *     response: ResponseInterface|null,
+     *     error: mixed,
+     *     options: array<string, mixed>,
+     *     result: list<PriceQuote>,
+     * }
+     */
+    private function getRatingTransaction(
+        string $xml,
+        int $statusCode = 200,
+        string $originPostalCode = 'H0H0H0',
+        Destination $destination = new Destination('CA', 'H0H0H0'),
+        Parcel $parcel = new Parcel(500),
+    ): array {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
-            new Response(200, [], FixtureFile::load('DevProgram/get-rates.xml')),
+            new Response($statusCode, [], $xml),
         ]);
 
-        $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);
+        // Add key 'result' for response after it passed through send.
+        $result = $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);
+        $firstTransaction = $historyContainer[0] ?? throw new \LogicException('No request sent.');
+        $firstTransaction['result'] = $result;
 
-        // Get request body from history.
-        $requestBody = new \DOMDocument();
-        $requestBody->loadXML((string) $historyContainer[0]['request']->getBody());
-
-        return $requestBody;
+        return $firstTransaction;
     }
 }

@@ -18,6 +18,31 @@ use iswilson\CanadaPost\Exception\InvalidArgumentException;
 interface RatingClientInterface
 {
     /**
+     * Canada Post specific service codes.
+     *
+     * @see https://www.canadapost-postescanada.ca/info/mc/business/productsservices/developers/services/rating/getrates/default.jsf
+     */
+    final public const array SERVICE_CODES = [
+        'DOM.EP' => 'Expedited Parcel',
+        'DOM.RP' => 'Regular Parcel',
+        'DOM.PC' => 'Priority',
+        'DOM.XP' => 'Xpresspost',
+        'DOM.XP.CERT' => 'Xpresspost Certified',
+        'DOM.LIB' => 'Library Materials',
+        'USA.EP' => 'Expedited Parcel USA',
+        'USA.SP.AIR' => 'Small Packet USA Air',
+        'USA.TP' => 'Tracked Packet - USA',
+        'USA.TP.LVM' => 'Tracked Packet - USA (LVM)',
+        'USA.XP' => 'Xpresspost USA',
+        'INT.XP' => 'Xpresspost International',
+        'INT.IP.AIR' => 'International Parcel Air',
+        'INT.IP.SURF' => 'International Parcel Surface',
+        'INT.SP.AIR' => 'Small Packet International Air',
+        'INT.SP.SURF' => 'Small Packet International Surface',
+        'INT.TP' => 'Tracked Packet - International',
+    ];
+
+    /**
      * Get a list of shipping services and rates for a given parcel.
      *
      * @see https://www.canadapost-postescanada.ca/info/mc/business/productsservices/developers/services/rating/getrates/default.jsf

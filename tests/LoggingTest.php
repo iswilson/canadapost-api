@@ -15,12 +15,14 @@ use iswilson\CanadaPost\Rating\PriceQuote;
 use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 #[CoversClass(CanadaPost::class)]
 #[CoversClass(DevProgram::class)]
-class LoggingTest extends TestCase
+#[Group('Logging')]
+final class LoggingTest extends TestCase
 {
     public function testRatingWithLogging(): void
     {
@@ -31,8 +33,8 @@ class LoggingTest extends TestCase
 
     public function testRatingWithoutLogging(): void
     {
-        $price_quotes = $this->getRatingResponse();
-        self::assertCount(2, $price_quotes);
+        $priceQuotes = $this->getRatingResponse();
+        self::assertCount(2, $priceQuotes);
     }
 
     public function testTrackingWithLogging(): void

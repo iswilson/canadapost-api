@@ -27,6 +27,7 @@
 - **BREAKING:** Removed original `ServiceInfo` class.
 - **BREAKING:** Removed `ClientBase` and `Exception\ClientException`.
 - **BREAKING:** Removed `getOptionCodes()` from `RatingClient`, use `ShipmentOption::CODES`.
+- **BREAKING:** Removed `getServiceCodes()` from `RatingClient`, use `RatingClientInterface::SERVICE_CODES`.
 
 ## [0.5.0] - 2026-11-19
 

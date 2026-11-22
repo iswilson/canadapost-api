@@ -11,10 +11,12 @@ use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Support\XmlFixture;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlResponse::class)]
-class XmlResponseTest extends TestCase
+#[Group('DevProgram')]
+final class XmlResponseTest extends TestCase
 {
     public function testInternalServerErrorResponse(): void
     {

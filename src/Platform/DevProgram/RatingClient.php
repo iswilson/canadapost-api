@@ -13,7 +13,7 @@ use iswilson\CanadaPost\Rating\RatingClientInterface;
 use iswilson\CanadaPost\Rating\ShipmentOption;
 
 /**
- * Rating contains Canada Post API calls for package rates.
+ * Rating client for Canada Post Developer Program (XML).
  */
 final readonly class RatingClient implements RatingClientInterface
 {
@@ -44,6 +44,7 @@ final readonly class RatingClient implements RatingClientInterface
             [
                 'Content-Type' => 'application/vnd.cpc.ship.rate-v4+xml',
                 'Accept' => 'application/vnd.cpc.ship.rate-v4+xml',
+                'Accept-Language' => 'en-CA',
             ],
             $payload,
         );
@@ -219,7 +220,7 @@ final readonly class RatingClient implements RatingClientInterface
      *
      * @throws CanadaPostException
      */
-    public static function parsePriceQuotes(\DOMDocument $doc): array
+    private static function parsePriceQuotes(\DOMDocument $doc): array
     {
         $priceQuotes = [];
         // Extract price quote data.
@@ -256,37 +257,6 @@ final readonly class RatingClient implements RatingClientInterface
     }
 
     /**
-     * Get the Canada Post specific service codes,
-     *
-     * @return array<string, string>
-     *   The array of service codes.
-     *
-     * @see https://www.canadapost.ca/cpo/mc/business/productsservices/developers/services/rating/getrates/default.jsf
-     */
-    public static function getServiceCodes(): array
-    {
-        return [
-            'DOM.EP' => 'Expedited Parcel',
-            'DOM.RP' => 'Regular Parcel',
-            'DOM.PC' => 'Priority',
-            'DOM.XP' => 'Xpresspost',
-            'DOM.XP.CERT' => 'Xpresspost Certified',
-            'DOM.LIB' => 'Library Materials',
-            'USA.EP' => 'Expedited Parcel USA',
-            'USA.SP.AIR' => 'Small Packet USA Air',
-            'USA.TP' => 'Tracked Packet - USA',
-            'USA.TP.LVM' => 'Tracked Packet - USA (LVM)',
-            'USA.XP' => 'Xpresspost USA',
-            'INT.XP' => 'Xpresspost International',
-            'INT.IP.AIR' => 'International Parcel Air',
-            'INT.IP.SURF' => 'International Parcel Surface',
-            'INT.SP.AIR' => 'Small Packet International Air',
-            'INT.SP.SURF' => 'Small Packet International Surface',
-            'INT.TP' => 'Tracked Packet - International',
-        ];
-    }
-
-    /**
      * Helper function to extract the service codes.
      *
      * @param list<string> $serviceCodes
@@ -304,10 +274,10 @@ final readonly class RatingClient implements RatingClientInterface
             $serviceCode = strtoupper(trim($serviceCode));
 
             // Check if code is in list of valid services.
-            if (!array_key_exists($serviceCode, self::getServiceCodes())) {
+            if (!array_key_exists($serviceCode, self::SERVICE_CODES)) {
                 $message = sprintf(
                     'Unsupported service code. Supported services are: %s',
-                    implode(', ', array_keys(self::getServiceCodes())),
+                    implode(', ', array_keys(self::SERVICE_CODES)),
                 );
                 throw new InvalidArgumentException($message);
             }

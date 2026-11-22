@@ -17,6 +17,7 @@ use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -24,7 +25,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
 #[CoversClass(Transport::class)]
-class TransportTest extends TestCase
+#[Group('DevProgram')]
+final class TransportTest extends TestCase
 {
     use HttpMockHandlerTrait;
 

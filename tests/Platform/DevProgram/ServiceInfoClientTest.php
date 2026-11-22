@@ -19,12 +19,10 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-/**
- * Service Info Class Tests.
- */
 #[CoversClass(ServiceInfoClient::class)]
+#[Group('DevProgram')]
 #[Group('ServiceInfo')]
-class ServiceInfoClientTest extends TestCase
+final class ServiceInfoClientTest extends TestCase
 {
     use HttpMockHandlerTrait;
 
@@ -66,7 +64,7 @@ class ServiceInfoClientTest extends TestCase
         self::assertSame('Message 2.', $result[1]->messageText);
     }
 
-    #[DataProvider('missingOrEmptyFields')]
+    #[DataProvider('getMissingOrEmptyFields')]
     public function testMissingOrEmptyFields(string $xml, string $expectedExceptionMessage): void
     {
         $this->expectException(CanadaPostException::class);
@@ -77,7 +75,7 @@ class ServiceInfoClientTest extends TestCase
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function missingOrEmptyFields(): iterable
+    public static function getMissingOrEmptyFields(): iterable
     {
         $xml = FixtureFile::load('DevProgram/get-service-info.xml');
         yield 'Empty message text' => [XmlFixture::withEmptyElement($xml, 'message-text'), 'empty info message'];

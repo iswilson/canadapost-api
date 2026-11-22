@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Tracking;
 
+/**
+ * Whether parcel delivery options were satisfied.
+ */
 enum DeliveryOptionCompleted: string
 {
     /**

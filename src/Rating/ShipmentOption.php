@@ -12,12 +12,13 @@ use iswilson\CanadaPost\Exception\InvalidArgumentException;
 final readonly class ShipmentOption
 {
     public const array CODES = [
-        'SO'   => 'Signature',
+        'SO'   => 'Signature option',
         'COV'  => 'Coverage',
         'COD'  => 'Collect on delivery',
-        'PA18' => 'Proof of Age Required - 18',
-        'PA19' => 'Proof of Age Required - 19',
-        'HFP'  => 'Card for pickup',
+        'PA18' => 'Proof of age required (18 years)',
+        'PA19' => 'Proof of age required (19 years)',
+        'PA21' => 'Proof of age required (21 years)',
+        'HFP'  => 'Card for pick-up',
         'DNS'  => 'Do not safe drop',
         'LAD'  => 'Leave at door - do not card',
     ];

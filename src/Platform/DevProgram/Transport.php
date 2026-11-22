@@ -19,6 +19,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 
+/**
+ * HTTP transport for Canada Post Developer Program (XML with Basic auth).
+ */
 final readonly class Transport
 {
     public const float DEFAULT_TIMEOUT = 30;

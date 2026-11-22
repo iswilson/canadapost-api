@@ -10,6 +10,9 @@ use iswilson\CanadaPost\Tracking\DeliveryOptionCompleted;
 use iswilson\CanadaPost\Tracking\PinSummary;
 use iswilson\CanadaPost\Tracking\TrackingClientInterface;
 
+/**
+ * Tracking client for Canada Post Developer Program (XML).
+ */
 final readonly class TrackingClient implements TrackingClientInterface
 {
     public function __construct(
@@ -24,8 +27,8 @@ final readonly class TrackingClient implements TrackingClientInterface
             'GET',
             sprintf('vis/track/pin/%s/summary', rawurlencode($pin)),
             [
-                'Accept-Language' => 'en-CA',
                 'Accept' => 'application/vnd.cpc.track-v2+xml',
+                'Accept-Language' => 'en-CA',
             ],
         );
 

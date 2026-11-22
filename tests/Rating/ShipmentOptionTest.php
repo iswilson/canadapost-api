@@ -8,10 +8,12 @@ use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Rating\ShipmentOption;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ShipmentOption::class)]
-class ShipmentOptionTest extends TestCase
+#[Group('Rating')]
+final class ShipmentOptionTest extends TestCase
 {
     #[DataProvider('getValidCodes')]
     public function testValidCodes(string $code, string $expectedCode): void
@@ -50,10 +52,11 @@ class ShipmentOptionTest extends TestCase
      */
     public static function getCodesWithAmountUnsupported(): iterable
     {
-        yield 'Signature' => ['SO'];
-        yield 'Proof of Age Required - 18' => ['PA18'];
-        yield 'Proof of Age Required - 19' => ['PA19'];
-        yield 'Card for pickup' => ['HFP'];
+        yield 'Signature option' => ['SO'];
+        yield 'Proof of age required (18 years)' => ['PA18'];
+        yield 'Proof of age required (19 years)' => ['PA19'];
+        yield 'Proof of age required (21 years)' => ['PA21'];
+        yield 'Card for pick-up' => ['HFP'];
         yield 'Do not safe drop' => ['DNS'];
         yield 'Leave at door - do not card' => ['LAD'];
     }

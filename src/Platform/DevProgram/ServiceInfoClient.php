@@ -8,6 +8,9 @@ use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\ServiceInfo\InfoMessage;
 use iswilson\CanadaPost\ServiceInfo\ServiceInfoClientInterface;
 
+/**
+ * Service Info client for Canada Post Developer Program (XML).
+ */
 final readonly class ServiceInfoClient implements ServiceInfoClientInterface
 {
     public function __construct(
@@ -21,8 +24,8 @@ final readonly class ServiceInfoClient implements ServiceInfoClientInterface
             // The message type is always SO (scheduled outage).
             'rs/serviceinfo/shipment?messageType=SO',
             [
-                'Accept-Language' => 'en-CA',
                 'Accept' => 'application/vnd.cpc.serviceinfo-v2+xml',
+                'Accept-Language' => 'en-CA',
             ],
         );
 
