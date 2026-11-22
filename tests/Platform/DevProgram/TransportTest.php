@@ -7,7 +7,6 @@ namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
@@ -15,9 +14,11 @@ use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
+use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -25,6 +26,8 @@ use Psr\Log\LogLevel;
 #[CoversClass(Transport::class)]
 class TransportTest extends TestCase
 {
+    use HttpMockHandlerTrait;
+
     #[DataProvider('getRequestPaths')]
     public function testRequestUriIsBuiltCorrectly(string $path, string $expectedUri): void
     {
@@ -280,10 +283,11 @@ class TransportTest extends TestCase
      * @param array{handler?: callable|null} $guzzleOptions
      *
      * @return array{
-     *     request: \Psr\Http\Message\RequestInterface,
-     *     response: \Psr\Http\Message\ResponseInterface,
+     *     request: RequestInterface,
+     *     response: ResponseInterface|null,
+     *     error: mixed,
      *     options: array<string, mixed>,
-     *     result: \Psr\Http\Message\ResponseInterface,
+     *     result: ResponseInterface,
      * }
      */
     private function captureHttpTransaction(
@@ -296,20 +300,16 @@ class TransportTest extends TestCase
         ResponseInterface|\Throwable $mockResponse = new Response(),
         ?LoggerInterface $logger = null,
     ): array {
-        $mock = new MockHandler([$mockResponse]);
-        $handlerStack = HandlerStack::create($mock);
-
-        // Add history middleware that will record each request.
         $historyContainer = [];
-        $history = Middleware::history($historyContainer);
-        $handlerStack->push($history);
+        $handlerStack = $this->handlerStack($historyContainer, [$mockResponse]);
 
         // Add key 'result' for response after it passed through send.
         $result = $this
             ->transport(guzzleOptions: ['handler' => $handlerStack] + $guzzleOptions, timeout: $timeout, logger: $logger)
             ->send($method, $path, $headers, $body);
-        $historyContainer[0]['result'] = $result;
+        $firstTransaction = $historyContainer[0] ?? throw new \LogicException('No request sent.');
+        $firstTransaction['result'] = $result;
 
-        return $historyContainer[0];
+        return $firstTransaction;
     }
 }
