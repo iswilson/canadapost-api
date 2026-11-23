@@ -7,6 +7,7 @@ namespace iswilson\CanadaPost\Tests\Traits;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\PromiseInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -25,6 +26,8 @@ trait HttpMockHandlerTrait
      *     error: mixed,
      *     options: array<string, mixed>,
      * }> $container
+     *
+     * @return HandlerStack<callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>>
      */
     private function handlerStack(array &$container, array $responses): HandlerStack
     {

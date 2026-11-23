@@ -12,9 +12,11 @@ use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\PromiseInterface;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
 use iswilson\CanadaPost\Logging\RedactingMessageFormatter;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
@@ -48,15 +50,18 @@ final readonly class Transport
 
         $handlerStack = $this->buildHandlerStack($guzzleOptions['handler'] ?? null);
         $this->client = new GuzzleClient([
+            ...$guzzleOptions,
             'handler' => $handlerStack,
             'base_uri' => $baseUrl,
             'auth' => [$username, $password],
             'timeout' => $timeout ?? self::DEFAULT_TIMEOUT,
-        ] + $guzzleOptions);
+        ]);
     }
 
     /**
      * Create Guzzle handler stack with logging middleware.
+     *
+     * @return HandlerStack<callable(RequestInterface, array<array-key, mixed>): PromiseInterface<ResponseInterface, mixed>>
      */
     private function buildHandlerStack(?callable $handler): HandlerStack
     {
@@ -83,7 +88,7 @@ final readonly class Transport
     /**
      * Build and send HTTP request.
      *
-     * @param array<string, list<string>|string> $headers
+     * @param array<string, non-empty-list<string>|string> $headers
      *   HTTP headers.
      */
     public function send(

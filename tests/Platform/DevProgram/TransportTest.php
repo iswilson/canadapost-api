@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace iswilson\CanadaPost\Tests\Platform\DevProgram;
 
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -247,7 +248,12 @@ final class TransportTest extends TestCase
         $spyLogger = new SpyLogger();
         $handlerStack = HandlerStack::create(new MockHandler([new Response()]));
         $this->transport(guzzleOptions: ['handler' => $handlerStack], logger: $spyLogger);
-        self::assertStringNotContainsString('canadapost_api_log', (string) $handlerStack);
+
+        // Send request with original handler.
+        $client = new Client(['handler' => $handlerStack]);
+        $client->request('GET', 'https://localhost');
+
+        self::assertCount(0, $spyLogger->records);
     }
 
     public function testNoCredentialsAreLogged(): void
@@ -281,7 +287,7 @@ final class TransportTest extends TestCase
     }
 
     /**
-     * @param array<string, list<string>|string> $headers
+     * @param array<string, non-empty-list<string>|string> $headers
      * @param array{handler?: callable|null} $guzzleOptions
      *
      * @return array{
