@@ -5,3 +5,6 @@ parameters:
     paths:
         - src
         - tests
+    phpVersion:
+        min: 80300
+        max: 80600

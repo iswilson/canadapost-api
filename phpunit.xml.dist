@@ -3,6 +3,17 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerNotices="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerErrors="true"
+         failOnDeprecation="true"
+         failOnNotice="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         failOnPhpunitDeprecation="true"
+         failOnPhpunitNotice="true"
 >
     <testsuites>
         <testsuite name="CanadaPost PHP SDK Test Suite">
@@ -15,4 +26,8 @@
             <directory>src</directory>
         </include>
     </source>
+
+    <php>
+        <ini name="error_reporting" value="-1"/>
+    </php>
 </phpunit>
