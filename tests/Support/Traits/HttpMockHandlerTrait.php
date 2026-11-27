@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace iswilson\CanadaPost\Tests\Traits;
+namespace iswilson\CanadaPost\Tests\Support\Traits;
 
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;

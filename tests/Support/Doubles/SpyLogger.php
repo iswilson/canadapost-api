@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace iswilson\CanadaPost\Tests\Doubles;
+namespace iswilson\CanadaPost\Tests\Support\Doubles;
 
 use Psr\Log\AbstractLogger;
 

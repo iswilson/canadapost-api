@@ -9,7 +9,7 @@ use iswilson\CanadaPost\CanadaPost;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
-use iswilson\CanadaPost\Tests\Traits\HttpMockHandlerTrait;
+use iswilson\CanadaPost\Tests\Support\Traits\HttpMockHandlerTrait;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;

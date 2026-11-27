@@ -12,7 +12,7 @@ use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
 use iswilson\CanadaPost\Rating\PriceQuote;
-use iswilson\CanadaPost\Tests\Doubles\SpyLogger;
+use iswilson\CanadaPost\Tests\Support\Doubles\SpyLogger;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
