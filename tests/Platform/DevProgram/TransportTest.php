@@ -12,6 +12,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Logging\LogType;
 use iswilson\CanadaPost\Platform\DevProgram\Transport;
 use iswilson\CanadaPost\Tests\Support\Doubles\SpyLogger;
 use iswilson\CanadaPost\Tests\Support\FixtureFile;
@@ -184,7 +185,9 @@ final class TransportTest extends TestCase
     {
         $spyLogger = new SpyLogger();
         $this->captureHttpTransaction('POST', 'test', logger: $spyLogger);
-        self::assertCount(1, $spyLogger->records);
+        self::assertCount(2, $spyLogger->records());
+        self::assertCount(1, $spyLogger->records(LogType::Request));
+        self::assertCount(1, $spyLogger->records(LogType::Response));
     }
 
     #[DataProvider('getHttpStatusCodeLogLevels')]
@@ -193,8 +196,7 @@ final class TransportTest extends TestCase
         $spyLogger = new SpyLogger();
         $mockResponse = new Response($statusCode);
         $this->captureHttpTransaction('POST', 'test', mockResponse: $mockResponse, logger: $spyLogger);
-        self::assertCount(1, $spyLogger->records);
-        self::assertSame($expectedLevel, $spyLogger->records[0]['level']);
+        self::assertSame($expectedLevel, $spyLogger->sole(LogType::Response)->level);
     }
 
     /**
@@ -215,8 +217,10 @@ final class TransportTest extends TestCase
             $this->captureHttpTransaction('POST', 'test', mockResponse: $mockResponse, logger: $spyLogger);
             self::fail('Expected CanadaPostException exception to be thrown.');
         } catch (CanadaPostException) {
-            self::assertCount(1, $spyLogger->records);
-            self::assertSame(LogLevel::ERROR, $spyLogger->records[0]['level']);
+            self::assertCount(2, $spyLogger->records());
+            self::assertSame(LogLevel::ERROR, $spyLogger->sole(LogType::Request)->level);
+            self::assertSame(LogLevel::ERROR, $spyLogger->sole(LogType::Response)->level);
+            self::assertStringContainsString('Connection refused', $spyLogger->sole(LogType::Response)->message);
         }
     }
 
@@ -225,7 +229,9 @@ final class TransportTest extends TestCase
         $spyLogger = new SpyLogger();
         $mock = new MockHandler([new Response()]);
         $this->transport(guzzleOptions: ['handler' => $mock], logger: $spyLogger)->send('POST', 'test');
-        self::assertCount(1, $spyLogger->records);
+        self::assertCount(2, $spyLogger->records());
+        self::assertCount(1, $spyLogger->records(LogType::Request));
+        self::assertCount(1, $spyLogger->records(LogType::Response));
     }
 
     public function testReusedHandlerStackWithLogging(): void
@@ -240,7 +246,9 @@ final class TransportTest extends TestCase
         }
 
         self::assertCount(0, $mock);
-        self::assertCount(5, $spyLogger->records);
+        self::assertCount(10, $spyLogger->records());
+        self::assertCount(5, $spyLogger->records(LogType::Request));
+        self::assertCount(5, $spyLogger->records(LogType::Response));
     }
 
     public function testHandlerStackIsNotChanged(): void
@@ -253,16 +261,24 @@ final class TransportTest extends TestCase
         $client = new Client(['handler' => $handlerStack]);
         $client->request('GET', 'https://localhost');
 
-        self::assertCount(0, $spyLogger->records);
+        self::assertCount(0, $spyLogger->records());
     }
 
     public function testNoCredentialsAreLogged(): void
     {
         $spyLogger = new SpyLogger();
         $this->captureHttpTransaction('POST', 'test', logger: $spyLogger);
-        self::assertCount(1, $spyLogger->records);
-        self::assertStringNotContainsString('password', $spyLogger->records[0]['message']);
-        self::assertStringNotContainsString(base64_encode('username:password'), $spyLogger->records[0]['message']);
+
+        self::assertCount(2, $spyLogger->records());
+
+        foreach ($spyLogger->records() as $record) {
+            self::assertStringNotContainsString('password', $record->message);
+            self::assertStringNotContainsString(base64_encode('username:password'), $record->message);
+        }
+
+        if (str_contains($spyLogger->sole(LogType::Request)->message, 'Authorization:')) {
+            self::assertStringContainsString('Authorization: [REDACTED]', $spyLogger->sole(LogType::Request)->message);
+        }
     }
 
     public function testOriginalRequestIsUnmodifiedByLogging(): void
@@ -270,6 +286,26 @@ final class TransportTest extends TestCase
         $spyLogger = new SpyLogger();
         $request = $this->captureHttpTransaction('POST', 'test', logger: $spyLogger)['request'];
         self::assertSame('Basic ' . base64_encode('username:password'), $request->getHeaderLine('Authorization'));
+    }
+
+    public function testRequestLogFormat(): void
+    {
+        $spyLogger = new SpyLogger();
+        $this->captureHttpTransaction('POST', 'test', body: 'testing', logger: $spyLogger);
+        $message = $spyLogger->sole(LogType::Request)->message;
+        self::assertStringStartsWith(">>>>>>>> REQUEST - POST /test\n", $message);
+        self::assertStringEndsWith(LogType::BODY_SEPARATOR . 'testing', $message);
+    }
+
+    public function testResponseLogFormat(): void
+    {
+        $mockResponse = new Response(body: 'testing');
+        $spyLogger = new SpyLogger();
+        $this->captureHttpTransaction('GET', 'test', mockResponse: $mockResponse, logger: $spyLogger);
+        $message = $spyLogger->sole(LogType::Response)->message;
+        self::assertStringStartsWith("<<<<<<<< RESPONSE 200 OK - GET /test\n", $message);
+        self::assertStringContainsString(LogType::ERROR_SEPARATOR . 'NULL' . LogType::BODY_SEPARATOR, $message);
+        self::assertStringEndsWith(LogType::BODY_SEPARATOR . 'testing', $message);
     }
 
     /**

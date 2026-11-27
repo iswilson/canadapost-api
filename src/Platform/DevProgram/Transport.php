@@ -11,10 +11,13 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
+use GuzzleHttp\MessageFormatterInterface;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Promise\PromiseInterface;
 use iswilson\CanadaPost\Exception\CanadaPostException;
 use iswilson\CanadaPost\Exception\InvalidArgumentException;
+use iswilson\CanadaPost\Logging\ContextLogger;
+use iswilson\CanadaPost\Logging\LogType;
 use iswilson\CanadaPost\Logging\RedactingMessageFormatter;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -27,8 +30,6 @@ use Psr\Log\LogLevel;
 final readonly class Transport
 {
     public const float DEFAULT_TIMEOUT = 30;
-    /** @see MessageFormatter for variable substitutions. */
-    private const string LOG_FORMAT = MessageFormatter::DEBUG;
     private ClientInterface $client;
 
     /**
@@ -74,12 +75,16 @@ final readonly class Transport
         // logged as errors.
         if ($this->logger !== null) {
             $handlerStack->unshift(Middleware::log(
-                $this->logger,
-                new RedactingMessageFormatter(
-                    new MessageFormatter(self::LOG_FORMAT),
-                ),
+                new ContextLogger($this->logger, [LogType::CONTEXT_KEY => LogType::Request->value]),
+                self::logFormatter(">>>>>>>> REQUEST - {method} {target}\n{req_headers}" . LogType::BODY_SEPARATOR . '{req_body}'),
                 LogLevel::DEBUG,
-            ), 'canadapost_api_log');
+            ), 'canadapost_api_log_request');
+
+            $handlerStack->unshift(Middleware::log(
+                new ContextLogger($this->logger, [LogType::CONTEXT_KEY => LogType::Response->value]),
+                self::logFormatter("<<<<<<<< RESPONSE {code} {phrase} - {method} {target}\n{res_headers}" . LogType::ERROR_SEPARATOR . '{error}' . LogType::BODY_SEPARATOR . '{res_body}'),
+                LogLevel::DEBUG,
+            ), 'canadapost_api_log_response');
         }
 
         return $handlerStack;
@@ -115,5 +120,15 @@ final readonly class Transport
         }
 
         return $response;
+    }
+
+    /**
+     * Build message formatter wrapped with redacting message formatter.
+     *
+     * @see MessageFormatter for variable substitutions.
+     */
+    private static function logFormatter(string $format): MessageFormatterInterface
+    {
+        return new RedactingMessageFormatter(new MessageFormatter($format));
     }
 }

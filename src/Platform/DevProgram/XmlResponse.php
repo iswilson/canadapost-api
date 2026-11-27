@@ -74,7 +74,7 @@ final class XmlResponse
 
         // Suppress libxml errors while reading data.
         $previousSetting = libxml_use_internal_errors(true);
-        $loaded = $doc->loadXML($xml);
+        $loaded = $doc->loadXML($xml, \LIBXML_NONET);
         libxml_clear_errors();
         libxml_use_internal_errors($previousSetting);
 

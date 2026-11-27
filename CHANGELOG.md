@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+- HTTP request and response logs can be differentiated with new `LogType` enum, set in context under `LogType::CONTEXT_KEY`. HTTP request/response messages are split into sections by ERROR_SEPARATOR and BODY_SEPARATOR, with the body last.
+
+### Changed
+- HTTP requests and responses are logged separately.
+- `LIBXML_NONET` flag is passed when parsing XML responses to disable network access.
+- Log middleware is now called `canadapost_api_log_request` and `canadapost_api_log_response` (was `canadapost_api_log`).
+
 ## [0.6.1] - 2026-11-23
 
 ### Added

@@ -8,6 +8,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\CanadaPost;
+use iswilson\CanadaPost\Logging\LogType;
 use iswilson\CanadaPost\Platform\DevProgram\DevProgram;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
@@ -28,7 +29,9 @@ final class LoggingTest extends TestCase
     {
         $spyLogger = new SpyLogger();
         $this->getRatingResponse($spyLogger);
-        self::assertCount(1, $spyLogger->records);
+        self::assertCount(2, $spyLogger->records());
+        self::assertCount(1, $spyLogger->records(LogType::Request));
+        self::assertCount(1, $spyLogger->records(LogType::Response));
     }
 
     public function testRatingWithoutLogging(): void
@@ -55,7 +58,9 @@ final class LoggingTest extends TestCase
             '1234567890123456',
         );
 
-        self::assertCount(1, $spyLogger->records);
+        self::assertCount(2, $spyLogger->records());
+        self::assertCount(1, $spyLogger->records(LogType::Request));
+        self::assertCount(1, $spyLogger->records(LogType::Response));
     }
 
     public function testSharedLogging(): void
@@ -80,7 +85,9 @@ final class LoggingTest extends TestCase
         $mock->append(new Response(200, [], FixtureFile::load('DevProgram/get-service-info.xml')));
         $platform->serviceInfo()->getServiceInfo();
 
-        self::assertCount(3, $spyLogger->records);
+        self::assertCount(6, $spyLogger->records());
+        self::assertCount(3, $spyLogger->records(LogType::Request));
+        self::assertCount(3, $spyLogger->records(LogType::Response));
     }
 
     /**

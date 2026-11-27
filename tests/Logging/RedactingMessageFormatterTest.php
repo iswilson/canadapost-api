@@ -8,6 +8,7 @@ use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use iswilson\CanadaPost\CanadaPost;
+use iswilson\CanadaPost\Logging\LogType;
 use iswilson\CanadaPost\Logging\RedactingMessageFormatter;
 use iswilson\CanadaPost\Rating\Destination;
 use iswilson\CanadaPost\Rating\Parcel;
@@ -81,8 +82,8 @@ final class RedactingMessageFormatterTest extends TestCase
     {
         $spyLogger = new SpyLogger();
         $this->getSentRatingRequest($spyLogger, new Destination($countryCode, $postalCode));
-        self::assertStringContainsString(sprintf('<%s>[REDACTED]</%s>', $fieldName, $fieldName), $spyLogger->records[0]['message']);
-        self::assertStringNotContainsString($postalCode, $spyLogger->records[0]['message']);
+        self::assertStringContainsString(sprintf('<%s>[REDACTED]</%s>', $fieldName, $fieldName), $spyLogger->sole(LogType::Request)->message);
+        self::assertStringNotContainsString($postalCode, $spyLogger->sole(LogType::Request)->message);
     }
 
     /**
@@ -101,8 +102,8 @@ final class RedactingMessageFormatterTest extends TestCase
     {
         $spyLogger = new SpyLogger();
         $this->getSentTrackingRequest($spyLogger);
-        self::assertStringContainsString(sprintf('<%s>[REDACTED]</%s>', $fieldName, $fieldName), $spyLogger->records[0]['message']);
-        self::assertStringNotContainsString($fieldValue, $spyLogger->records[0]['message']);
+        self::assertStringContainsString(sprintf('<%s>[REDACTED]</%s>', $fieldName, $fieldName), $spyLogger->sole(LogType::Response)->message);
+        self::assertStringNotContainsString($fieldValue, $spyLogger->sole(LogType::Response)->message);
     }
 
     /**
@@ -120,10 +121,10 @@ final class RedactingMessageFormatterTest extends TestCase
     {
         $spyLogger = new SpyLogger();
         $this->getSentRatingRequest($spyLogger, new Destination('AQ'));
-        self::assertStringContainsString('<customer-number>12345789</customer-number>', $spyLogger->records[0]['message']);
-        self::assertStringContainsString('<contract-id>135792468</contract-id>', $spyLogger->records[0]['message']);
-        self::assertStringContainsString('<origin-postal-code>K1A0B1</origin-postal-code>', $spyLogger->records[0]['message']);
-        self::assertStringContainsString('<country-code>AQ</country-code>', $spyLogger->records[0]['message']);
+        self::assertStringContainsString('<customer-number>12345789</customer-number>', $spyLogger->sole(LogType::Request)->message);
+        self::assertStringContainsString('<contract-id>135792468</contract-id>', $spyLogger->sole(LogType::Request)->message);
+        self::assertStringContainsString('<origin-postal-code>K1A0B1</origin-postal-code>', $spyLogger->sole(LogType::Request)->message);
+        self::assertStringContainsString('<country-code>AQ</country-code>', $spyLogger->sole(LogType::Request)->message);
     }
 
     private function getSentRatingRequest(LoggerInterface $logger, ?Destination $destination = null): RequestInterface
