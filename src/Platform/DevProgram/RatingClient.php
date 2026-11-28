@@ -29,6 +29,7 @@ final readonly class RatingClient implements RatingClientInterface
         Parcel $parcel,
         array $shipmentOptions = [],
         array $serviceCodes = [],
+        ?\DateTimeImmutable $expectedMailingDate = null,
     ): array {
         $payload = $this->buildRequestXml(
             Destination::normalizeCanadianPostalCode($originPostalCode),
@@ -36,6 +37,7 @@ final readonly class RatingClient implements RatingClientInterface
             $parcel,
             ShipmentOption::unique($shipmentOptions),
             $this->parseServiceCodes($serviceCodes),
+            $expectedMailingDate,
         );
 
         $response = $this->transport->send(
@@ -66,6 +68,7 @@ final readonly class RatingClient implements RatingClientInterface
         Parcel $parcel,
         array $shipmentOptions,
         array $serviceCodes,
+        ?\DateTimeImmutable $expectedMailingDate,
     ): string {
         $doc = new \DOMDocument('1.0', 'UTF-8');
 
@@ -84,6 +87,13 @@ final readonly class RatingClient implements RatingClientInterface
             $root->appendChild(
                 $doc->createElement('contract-id'),
             )->textContent = $this->contractId;
+        }
+
+        // Expected mailing date.
+        if ($expectedMailingDate !== null) {
+            $root->appendChild(
+                $doc->createElement('expected-mailing-date'),
+            )->textContent = $expectedMailingDate->format('Y-m-d');
         }
 
         // Options.
@@ -226,30 +236,26 @@ final readonly class RatingClient implements RatingClientInterface
         // Extract price quote data.
         $nodes = $doc->getElementsByTagName('price-quote');
         foreach ($nodes as $node) {
-            $serviceCode = $node->getElementsByTagName('service-code')->item(0)->textContent ?? '';
-            if ($serviceCode === '') {
+            $serviceCode = XmlResponse::extractText($node, 'service-code');
+            if ($serviceCode === null) {
                 throw new CanadaPostException('Canada Post API returned an empty service code.');
             }
 
-            $serviceName = $node->getElementsByTagName('service-name')->item(0)->textContent ?? '';
-            if ($serviceName === '') {
+            $serviceName = XmlResponse::extractText($node, 'service-name');
+            if ($serviceName === null) {
                 throw new CanadaPostException('Canada Post API returned an empty service name.');
             }
-
-            $totalDue = $node->getElementsByTagName('due')->item(0)->textContent ?? '';
-
-            // Missing (not empty) tax elements should have a default of zero.
-            $gst = $node->getElementsByTagName('gst')->item(0)->textContent ?? '0';
-            $pst = $node->getElementsByTagName('pst')->item(0)->textContent ?? '0';
-            $hst = $node->getElementsByTagName('hst')->item(0)->textContent ?? '0';
 
             $priceQuotes[] = new PriceQuote(
                 $serviceCode,
                 $serviceName,
-                self::convertDollarsToCents($totalDue),
-                self::convertDollarsToCents($gst),
-                self::convertDollarsToCents($pst),
-                self::convertDollarsToCents($hst),
+                self::convertDollarsToCents(XmlResponse::extractText($node, 'due') ?? ''),
+                // Missing (not empty) tax elements should have a default of zero.
+                self::convertDollarsToCents(XmlResponse::extractTextOrEmpty($node, 'gst') ?? '0'),
+                self::convertDollarsToCents(XmlResponse::extractTextOrEmpty($node, 'pst') ?? '0'),
+                self::convertDollarsToCents(XmlResponse::extractTextOrEmpty($node, 'hst') ?? '0'),
+                XmlResponse::extractInt($node, 'expected-transit-time'),
+                XmlResponse::extractDateTime($node, 'expected-delivery-date'),
             );
         }
 

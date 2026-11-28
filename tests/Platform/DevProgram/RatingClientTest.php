@@ -136,8 +136,22 @@ final class RatingClientTest extends TestCase
     {
         $response = $this->getRatingResponse(FixtureFile::load('DevProgram/get-rates.xml'));
         self::assertEquals([
-            new PriceQuote('DOM.EP', 'Expedited Parcel', 1130, hstCents: 130),
-            new PriceQuote('DOM.XP', 'Xpresspost', 2260, hstCents: 260),
+            new PriceQuote(
+                'DOM.EP',
+                'Expedited Parcel',
+                1130,
+                hstCents: 130,
+                expectedTransitTimeDays: 2,
+                expectedDeliveryDate: new \DateTimeImmutable('2026-12-25', new \DateTimeZone('UTC')),
+            ),
+            new PriceQuote(
+                'DOM.XP',
+                'Xpresspost',
+                2260,
+                hstCents: 260,
+                expectedTransitTimeDays: 1,
+                expectedDeliveryDate: new \DateTimeImmutable('2026-12-24', new \DateTimeZone('UTC')),
+            ),
         ], $response);
     }
 
@@ -160,8 +174,8 @@ final class RatingClientTest extends TestCase
         }
     }
 
-    #[DataProvider('getMissingOrEmptyFields')]
-    public function testResponseWithMissingOrEmptyFields(string $xml, string $expectedExceptionMessage): void
+    #[DataProvider('getMissingOrEmptyRequiredFields')]
+    public function testResponseWithMissingOrEmptyRequiredFields(string $xml, string $expectedExceptionMessage): void
     {
         $this->expectException(CanadaPostException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
@@ -171,7 +185,7 @@ final class RatingClientTest extends TestCase
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function getMissingOrEmptyFields(): iterable
+    public static function getMissingOrEmptyRequiredFields(): iterable
     {
         $xml = FixtureFile::load('DevProgram/get-rates.xml');
         yield 'Missing service code' => [XmlFixture::withoutElement($xml, 'service-code'), 'service code'];
@@ -183,11 +197,25 @@ final class RatingClientTest extends TestCase
         yield 'Empty tax' => [XmlFixture::withEmptyElement($xml, 'pst'), 'dollar amount'];
     }
 
-    public function testResponseMissingTax(): void
+    #[DataProvider('getMissingOrEmptyOptionalFields')]
+    public function testResponseMissingOrEmptyOptionalFields(string $xml, string $propertyName, mixed $expectedValue): void
+    {
+        $response = $this->getRatingResponse($xml);
+        // @phpstan-ignore property.dynamicName
+        self::assertSame($expectedValue, $response[0]->$propertyName);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, mixed}>
+     */
+    public static function getMissingOrEmptyOptionalFields(): iterable
     {
         $xml = FixtureFile::load('DevProgram/get-rates.xml');
-        $response = $this->getRatingResponse(XmlFixture::withoutElement($xml, 'hst'));
-        self::assertSame(0, $response[0]->hstCents);
+        yield 'Missing tax' => [XmlFixture::withoutElement($xml, 'hst'), 'hstCents', 0];
+        yield 'Missing expected transit time' => [XmlFixture::withoutElement($xml, 'expected-transit-time'), 'expectedTransitTimeDays', null];
+        yield 'Empty expected transit time' => [XmlFixture::withEmptyElement($xml, 'expected-transit-time'), 'expectedTransitTimeDays', null];
+        yield 'Missing expected delivery date' => [XmlFixture::withoutElement($xml, 'expected-delivery-date'), 'expectedDeliveryDate', null];
+        yield 'Empty expected delivery date' => [XmlFixture::withEmptyElement($xml, 'expected-delivery-date'), 'expectedDeliveryDate', null];
     }
 
     #[DataProvider('getDestinations')]
@@ -228,6 +256,23 @@ final class RatingClientTest extends TestCase
         $sentXml = $request->saveXML($request->getElementsByTagName('origin-postal-code')->item(0));
         self::assertIsString($sentXml);
         self::assertXmlStringEqualsXmlString('<origin-postal-code>H0H0H0</origin-postal-code>', $sentXml);
+    }
+
+    public function testSendsExpectedMailingDate(): void
+    {
+        $requestBody = (string) $this->getRatingTransaction(
+            FixtureFile::load('DevProgram/get-rates.xml'),
+            expectedMailingDate: new \DateTimeImmutable('2026-12-01', new \DateTimeZone('UTC')),
+        )['request']->getBody();
+        self::assertStringContainsString('<expected-mailing-date>2026-12-01</expected-mailing-date>', $requestBody);
+    }
+
+    public function testOmitExpectedMailingDateIfNotProvided(): void
+    {
+        $requestBody = (string) $this->getRatingTransaction(
+            FixtureFile::load('DevProgram/get-rates.xml'),
+        )['request']->getBody();
+        self::assertStringNotContainsString('<expected-mailing-date>', $requestBody);
     }
 
     #[DataProvider('getValidFormatDecimalInputs')]
@@ -380,6 +425,7 @@ final class RatingClientTest extends TestCase
         string $originPostalCode = 'H0H0H0',
         Destination $destination = new Destination('CA', 'H0H0H0'),
         Parcel $parcel = new Parcel(500),
+        ?\DateTimeImmutable $expectedMailingDate = null,
     ): array {
         $historyContainer = [];
         $handlerStack = $this->handlerStack($historyContainer, [
@@ -387,7 +433,12 @@ final class RatingClientTest extends TestCase
         ]);
 
         // Add key 'result' for response after it passed through send.
-        $result = $this->rating($handlerStack)->getRates($originPostalCode, $destination, $parcel);
+        $result = $this->rating($handlerStack)->getRates(
+            $originPostalCode,
+            $destination,
+            $parcel,
+            expectedMailingDate: $expectedMailingDate,
+        );
         $firstTransaction = $historyContainer[0] ?? throw new \LogicException('No request sent.');
         $firstTransaction['result'] = $result;
 

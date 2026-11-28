@@ -57,6 +57,9 @@ interface RatingClientInterface
      *   Shipment options.
      * @param list<string> $serviceCodes
      *   Specific services to be rated.
+     * @param \DateTimeImmutable|null $expectedMailingDate
+     *   Expected mailing date for the parcel. Only the date is sent, which
+     *   should be local to the origin postal code.
      *
      * @return list<PriceQuote>
      *
@@ -69,5 +72,6 @@ interface RatingClientInterface
         Parcel $parcel,
         array $shipmentOptions = [],
         array $serviceCodes = [],
+        ?\DateTimeImmutable $expectedMailingDate = null,
     ): array;
 }

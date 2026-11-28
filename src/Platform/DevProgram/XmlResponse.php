@@ -112,6 +112,34 @@ final class XmlResponse
     }
 
     /**
+     * @return string|null
+     *   Returns null if element is missing.
+     */
+    public static function extractTextOrEmpty(\DOMElement $element, string $qualifiedName): ?string
+    {
+        $text = $element->getElementsByTagName($qualifiedName)->item(0)->textContent ?? null;
+        return ($text === null) ? null : trim($text);
+    }
+
+    /**
+     * @return int|null
+     *   Returns null if element is empty or missing.
+     */
+    public static function extractInt(\DOMElement $element, string $qualifiedName): ?int
+    {
+        $text = self::extractText($element, $qualifiedName);
+        if ($text === null) {
+            return null;
+        }
+
+        if (!ctype_digit($text)) {
+            throw new CanadaPostException('Canada Post API returned an invalid number.');
+        }
+
+        return (int) $text;
+    }
+
+    /**
      * @return \DateTimeImmutable|null
      *   Returns null if element is empty or missing.
      *

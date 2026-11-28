@@ -180,6 +180,14 @@ final class XmlResponseTest extends TestCase
         self::assertNull($text);
     }
 
+    public function testInvalidNumber(): void
+    {
+        $element = XmlFixture::loadFirstElement('<test><integer>H</integer></test>', 'test');
+        $this->expectException(CanadaPostException::class);
+        $this->expectExceptionMessage('invalid number');
+        XmlResponse::extractInt($element, 'integer');
+    }
+
     public function testMalformedDate(): void
     {
         $element = XmlFixture::loadFirstElement(<<<'EOF'

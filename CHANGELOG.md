@@ -4,6 +4,8 @@
 
 ### Added
 - HTTP request and response logs can be differentiated with new `LogType` enum, set in context under `LogType::CONTEXT_KEY`. HTTP request/response messages are split into sections by ERROR_SEPARATOR and BODY_SEPARATOR, with the body last.
+- `PriceQuote` includes `expectedTransitTimeDays` and `expectedDeliveryDate`.
+- Rating requests can include optional `expectedMailingDate` in `getRates()`.
 
 ### Changed
 - HTTP requests and responses are logged separately.

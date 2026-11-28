@@ -13,15 +13,6 @@ use PHPUnit\Framework\TestCase;
 #[Group('Rating')]
 final class PriceQuoteTest extends TestCase
 {
-    public function testDefaultValues(): void
-    {
-        $priceQuote = new PriceQuote('code', 'service', 100);
-        self::assertSame(0, $priceQuote->gstCents);
-        self::assertSame(0, $priceQuote->pstCents);
-        self::assertSame(0, $priceQuote->hstCents);
-        self::assertSame(100, $priceQuote->totalDueBeforeTaxesCents());
-    }
-
     public function testCalculateTotalTaxes(): void
     {
         $priceQuote = new PriceQuote('code', 'service', 100, 1, 2, 3);

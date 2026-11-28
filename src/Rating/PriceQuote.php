@@ -19,6 +19,9 @@ final readonly class PriceQuote
         public int $gstCents = 0,
         public int $pstCents = 0,
         public int $hstCents = 0,
+        // Service standards.
+        public ?int $expectedTransitTimeDays = null,
+        public ?\DateTimeImmutable $expectedDeliveryDate = null,
     ) {}
 
     /**
